@@ -15,7 +15,7 @@ global with sharing class AccountInfoController{
     //TEST GIT 5	
     public transient Component.Apex.PageBlock CustomerEnquiryPage  {get;set;}
     public transient Component.Apex.PageBlock FilterSection     {get;set;}
-     //fhgfhgf  
+     //  
     //Writing test Code for GIT Testing  
     public string ChildInquiry  {get; set;}
     public string ChildField    {get;set;}

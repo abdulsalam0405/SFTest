@@ -14,7 +14,8 @@ global with sharing class AccountInfoController{
     //Data Page related variables
     public transient Component.Apex.PageBlock CustomerEnquiryPage  {get;set;}
     public transient Component.Apex.PageBlock FilterSection     {get;set;}
-      
+    
+    //Writing test Code for GIT Testing  
     public string ChildInquiry  {get; set;}
     public string ChildField    {get;set;}
     public string ChildValue    {get;set;}

@@ -1,0 +1,7 @@
+<apex:page standardController="Ship_To__c" extensions="AddressController" sidebar="false" docType="html-5.0">
+    <c:NoRightsComponent rendered="{!AND(if(JSENCODE(ProfileName)=='System Administrator',false,true),NOT(bAdministration))}"></c:NoRightsComponent>
+    <!--<apex:pageMessages ></apex:pageMessages>-->   
+    <apex:include pageName="{!AddressPage}"/>
+
+      
+</apex:page>

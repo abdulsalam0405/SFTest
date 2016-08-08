@@ -1,0 +1,243 @@
+<apex:page sidebar="false" standardController="ERP_Config__c" tabStyle="ERP_Administration__tab" extensions="ConfigurationListController" docType="html-5.0" showHeader="false" >
+<apex:pagemessages ></apex:pagemessages>
+    <c:LoadBarComponent />
+    <c:NoRightsComponent rendered="{!AND(if(JSENCODE(ProfileName)=='System Administrator',false,true),NOT(bAdministration))}"></c:NoRightsComponent>
+    
+    <style type="text/css">
+        .bPageBlock
+        {
+          border-top: 4px solid #63a4c5 !important;
+        }
+        
+        .pbSubheader 
+        {
+            background-color: #63a4c5 !important;
+        }
+        
+        .pageTitleIcon
+        {
+            background-image : none !important;
+            width :35px !important;
+            height:35px !important;
+        }
+        .tblEntity 
+        {
+            width: 400px;
+            margin:0 auto;
+            border-collaps:collaps;
+        }
+        .bPageTitle
+        {
+            padding: 5px 0px !important;
+            margin-bottom: 5px !important;
+        }
+        .activeTab 
+        {
+            background-color: #236FBD; 
+            color:white;
+            background-image:none;
+            border-top-left-radius:5px;
+            border-top-right-radius:5px
+        }
+        .inactiveTab 
+        {
+            background-color: lightgrey; 
+            color:black; 
+            background-image:none;
+            border-top-left-radius:5px;
+            border-top-right-radius:5px
+        }
+        .hdr{font-weight:bold;}
+        .rich-tab-header{font-size: 12px;}
+        .rich-tabhdr-side-cell{border:none;}
+        .rich-tabpanel-content{font-size: 12px;}
+        .refreshListButton1
+        {
+            background: url(/img/alohaSkin/sync.png) top left no-repeat !important;
+            width: 22px ;
+            height: 23px;
+            vertical-align: middle;
+            background-position: 2px 3px !important;
+        }
+        .ConFailed
+        {
+            color:red;
+            font-size:100%;
+            font-weight:bold;
+        }
+        .ConSuccess
+        {
+            color:green;
+            font-size:100%;
+            font-weight:bold;
+        }
+        .data2Col
+        {
+            padding-left: 0px !important;
+            padding-right: 0px !important;
+        }
+        .error{border: 1px solid #c00 !important;}
+        label.error
+        {
+            border: 0px !important;
+            margin-left:5px !important; 
+            color:red !important;
+        }
+        
+        .labelCol
+        {
+            padding-right: 15px !important;
+            vertical-align: middle !important;
+        }
+        
+        .ui-widget 
+        {
+            font-family: Verdana,Arial,sans-serif !important;
+            font-size: 1.1em !important;
+        }
+        .ui-widget-header 
+        {
+            border: 1px solid #aaaaaa !important;
+            background: #cccccc !important;
+            color: #222222 !important;
+            font-weight: bold !important;
+        }
+        .ui-widget-content 
+        {
+            border: 1px solid #aaaaaa !important;
+            background: #ffffff !important;
+            color: #222222 !important;
+        }
+        .ui-progressbar 
+        {
+            height:20px !important;
+            padding-right:0px !important;
+            margin-right:0px !important;
+        }
+        .ui-progressbar-value
+        {
+            height:20px !important;
+            background: #63a4c5 !important;
+        }
+        .progress-label 
+        {
+            margin-left: 10px;
+            text-align: center;
+            top: 4px;
+            font-size:12px;
+            font-weight: bold;
+            text-shadow: 1px 1px 0 #fff;
+          }
+          .bPageTitle 
+            {
+                padding: 0px !important;
+                margin: 5px !important;
+            }
+
+          .pageTitleIcon
+           {
+                //background-image: url(/resource/1441006001000/IntegrationResources/Images/Administration/Configuration.gif) !important;
+                background-image: url("{!URLFOR($Resource.IntegrationResources, '/Images/Administration/Configuration.gif')}") !important;
+                
+           }
+        
+    </style>
+    
+    
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery.min.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery-ui.min.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery.serializeJSON.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/Validation/jquery.validate.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/Validation/jquery.validate.min.js')}" ></script>
+    <!--<link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css"></link>-->
+    <link rel="stylesheet" href="{!URLFOR($Resource.IntegrationResources, '/Jquery/ui/1.10.4/themes/smoothness/jquery-ui.css')}"></link>
+    
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources,'/Script/Lookup.js')}" ></script>
+    
+    
+    
+    <script type="text/javascript">
+        var j$ = jQuery.noConflict();
+
+        j$(document).ready(function () 
+        {
+           hideLoading();
+        });
+        
+        function deleteRecord(ConfigId)
+        {
+            debugger;
+           
+            var isDelete =confirm('Do you want to delete integration');
+            
+            if(isDelete)
+            {
+                showLoading();
+               deleteRecords(ConfigId);
+            }
+        }
+    </script>
+ 
+ <apex:pageBlock rendered="{!OR(if(JSENCODE(ProfileName)=='System Administrator',true,false),(bAdministration))}" >
+ <br/>
+    <apex:sectionHeader title="ERP Configuration"/>
+    <apex:outputLink value="/apex/HomeSetting" style="font-size:11px;text-decoration:none;font-family:Verdana,Arial,serif;color:#015ba7;">&nbsp;&nbsp;&nbsp;&#60;&#60; Back to Home</apex:outputLink>
+    <br/>
+    <br/>  
+    <apex:form id="frmErpConfig" >
+        <apex:pagemessages id="msgLog"></apex:pagemessages>
+        <apex:actionFunction action="{!deleteConfiguration}" reRender="configlist,msgLog" name="deleteRecords" oncomplete="hideLoading();" immediate="true">
+             <apex:param name="ConID" value=""/>
+             <apex:param name="Mode" value="Delete"/>
+        </apex:actionFunction>
+        
+         <apex:pageBlock title="Integration List" Id="ParentFields">
+                <apex:commandButton value="New Integration" action="{!ConfigDetails}" >
+                    <apex:param name="ConID" value=""/>
+                    <apex:param name="Mode" value="New"/>
+                </apex:commandButton>
+                <br/> <br/>                               
+                <apex:pageBlockTable value="{!oConfigurationList}" var="con" id="configlist"  >
+                    
+                    <apex:column headerValue="Action">
+                        <apex:commandLink value="Edit" action="{!ConfigDetails}" immediate="true">
+                            <apex:param name="ConID" value="{!con.Id}"/>
+                            <apex:param name="Mode" value="Edit"/>
+                        </apex:commandLink>
+                        &nbsp;| &nbsp;
+                        <apex:commandLink value="Del" onclick="deleteRecord('{!con.Id}');" reRender="configlist,msgLog">
+                            <!--<apex:param name="ConID" value="{!con.Id}"/>
+                            <apex:param name="Mode" value="Delete"/>-->
+                        </apex:commandLink>                          
+                    </apex:column>
+                    
+                    <apex:column headerValue="Integration Name">
+                        <apex:commandLink value="{!con.Name}" action="{!ConfigDetails}" immediate="true" >
+                            <apex:param name="ConID" value="{!con.Id}"/>
+                            <apex:param name="Mode" value="View"/>
+                        </apex:commandLink>                          
+                    </apex:column>
+                    
+                    <apex:column headerValue="ERP System">
+                        <apex:outputLabel value="{!con.ERP_System__c}"></apex:outputLabel>                            
+                    </apex:column> 
+                    
+                    <apex:column headerValue="Web Service URL">
+                        <apex:outputLabel value="{!con.Web_Service_URL__c}"></apex:outputLabel>                          
+                    </apex:column>
+                    
+                    <apex:column headerValue="Synchronization">
+                        <apex:outputLabel value="{!con.Synchronization__c}"></apex:outputLabel>
+                    </apex:column>
+                    <apex:column headerValue="Default">
+                        <apex:outputField value="{!con.Default__c}"/>
+                    </apex:column>
+                    <apex:column headerValue="  Inactive">
+                        <apex:outputField value="{!con.Inactive__c}"/>
+                    </apex:column> 
+                    
+                </apex:pageBlockTable>
+              </apex:pageBlock>
+    </apex:form>
+    </apex:pageBlock>      
+</apex:page>

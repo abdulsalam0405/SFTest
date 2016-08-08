@@ -1,0 +1,277 @@
+<apex:page sidebar="false" showHeader="false" standardController="Entity_Mapping_Header__c" extensions="ImporterMaintenanceController" >
+     <c:LoadBarComponent />
+    <apex:stylesheet value="{!URLFOR($Resource.IntegrationResources,'/CSS/DataViewPage.css')}"/>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery.min.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery-ui.min.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery.serializeJSON.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/Validation/jquery.validate.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/Validation/jquery.validate.min.js')}" ></script>
+    <!--<script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources,'Script/Lookup.js')}" ></script>-->
+    <script type="text/javascript">
+         var j$ = jQuery.noConflict();
+         hideLoading();
+    </script>     
+    
+    
+    <style type="text/css">
+    .alert-box {
+        color:#555;
+        border-radius:10px;
+        font-family:Tahoma,Geneva,Arial,sans-serif;font-size:11px;
+        padding:10px 36px;
+        margin:10px;
+       
+    }
+    .pageTitleIcon {
+            background-image: url(/img/icon/orderBell32.png) !important;
+            
+        }
+     
+    .alert-box span {
+        font-weight:bold;
+        text-transform:uppercase;
+    }
+    .error {
+        background:#ffecec url('../../images/error.png') no-repeat 10px 50%;
+        border:1px solid #f5aca6;
+    }
+    .success {
+        background:#e9ffd9 url('../../images/success.png') no-repeat 10px 50%;
+        border:1px solid #a6ca8a;
+    }
+    .warning {
+        background:#fff8c4 url('../../images/warning.png')  no-repeat 10px 50%;
+        border:1px solid #f2c779;
+    }
+    .notice {
+        background:#e3f7fc url('../../images/notice.png') no-repeat 10px 50%;
+        border:1px solid #8ed9f6;
+    }
+    
+    
+    </style>
+     
+   <apex:sectionHeader title="Entity Sync Mapping"/>
+
+    <!--<apex:detail id="IdEntityDetial" relatedList="false" relatedListHover="false" />-->
+    <apex:form >       
+        <apex:pagemessages Id="IdLog"/>
+        <br/>
+        <apex:outputLink value="/apex/HomeSetting" style="font-size:11px;text-decoration:none;font-family:Verdana,Arial,serif;color:#015ba7;">&nbsp;&nbsp;&nbsp;&#60;&#60; Back to Home</apex:outputLink>
+       <apex:outputLink value="/apex/EntityMapping" style="font-size:11px;text-decoration:none;font-family:Verdana,Arial,serif;color:#015ba7;">&nbsp;&nbsp;&nbsp;&#60;&#60; Back to Entity Mapping List</apex:outputLink>
+        <br/>
+        
+        <apex:pageBlock id="hdrBlock">
+              <apex:pageBlockButtons location="both">
+                  <apex:commandButton reRender="IdLog,hdrBlock,NewSourceField,IdBtnPanel,IdGroup,NewSourceField1,sourceField" value="Refresh Fields" action="{!RefereshDetail}" styleClass="btn" onclick="showLoading();" oncomplete="hideLoading();" />
+                  <apex:commandButton value="Save" action="{!SaveSourceField}" styleClass="btn" rerender="IdLog" onclick="showLoading();" oncomplete="hideLoading();" />
+                  <apex:commandButton action="{!RedirectOncancel}"  value="Cancel" immediate="true" />  
+              </apex:pageBlockButtons>
+             <apex:pageBlockSection columns="2" id="hdrBlock" showHeader="true" title="Entity Mapping Details">
+
+                 <apex:inputField id="API" value="{!Entity_Mapping_Header.Source_Entity__c}" rendered="{!Not(ShowName)}"/>
+                 <apex:outputField id="outAPI" value="{!Entity_Mapping_Header.Source_Entity__c}" rendered="{!ShowName}"/>  
+                 
+                 
+              
+                 <apex:inputField value="{!Entity_Mapping_Header.Target_Entity__c}" rendered="{!Not(ShowTarget)}"/>
+                 <apex:outputField value="{!Entity_Mapping_Header.Target_Entity__c}" rendered="{!ShowTarget}"/>
+                 
+                 <apex:inputField value="{!Entity_Mapping_Header.Entity_Id__c}" rendered="{!Not(ShowEntity)}"/>
+                 <apex:outputField value="{!Entity_Mapping_Header.Entity_Id__c}" rendered="{!ShowEntity}"/>
+                 
+                 
+                 <apex:inputField value="{!Entity_Mapping_Header.Next_EMH_Id__c}" rendered="{!Not(ShowChainTo)}"/>
+                 <apex:outputField value="{!Entity_Mapping_Header.Next_EMH_Id__c}" rendered="{!ShowChainTo}"/>
+                  
+                    
+                  
+                 <apex:inputField value="{!Entity_Mapping_Header.Sync_Direction__c}" rendered="false"/>
+                 <apex:outputField value="{!Entity_Mapping_Header.Sync_Direction__c}" rendered="false"/>
+                 
+                 <apex:inputField value="{!Entity_Mapping_Header.Active__c}"/>
+                 
+                 <apex:selectList required="true" value="{!Entity_Mapping_Header.Integration_Key__c}" multiselect="false" size="1" disabled="{!ShowErpSystem}" >
+                    <apex:selectOptions value="{!IntegrationList}"/>
+                 </apex:selectList>
+                 
+                 <!--<apex:inputField value="{!Entity_Mapping_Header.ERP_System__c}"/>-->
+                  
+                                  
+                 <apex:outputField value="{!Entity_Mapping_Header.Sync_Type__c}"/> 
+                 <apex:inputField value="{!Entity_Mapping_Header.Size__c}"/>       
+                 
+                 <apex:inputField value="{!Entity_Mapping_Header.IsStandardPB__c}"/>
+                 
+                    
+             </apex:pageBlockSection>
+             <apex:pageBlockSection columns="2"  showHeader="true" title="Schedule">
+                 <apex:outputField value="{!Entity_Mapping_Header.Schedule_Id__c}" rendered="{!Not(ShowScheduleId)}"  />
+                 <apex:outputField value="{!Entity_Mapping_Header.Schedule_Id__c}" rendered="{!ShowScheduleId}"/>
+                 
+                 <apex:inputField value="{!Entity_Mapping_Header.Schedule_Start__c}" rendered="{!Not(ShowScheduleStart)}"/>
+                 <apex:outputField value="{!Entity_Mapping_Header.Schedule_Start__c}" rendered="{!ShowScheduleStart}"/>
+                 
+                 <apex:inputField value="{!Entity_Mapping_Header.Schedule_Type__c}" rendered="{!Not(ShowScheduleType)}"/>
+                 <apex:outputField value="{!Entity_Mapping_Header.Schedule_Type__c}" rendered="{!ShowScheduleType}"/>
+             </apex:pageBlockSection>
+             
+         </apex:pageBlock> 
+        
+         <!--<apex:outputLabel value="{!LogMessage}" id="msg1" style="text-wight:bold;background-color:lightgrey"/>    -->
+         <apex:tabPanel >
+          <apex:tab label="Mapping" switchType="client" >
+            <apex:pageBlock title="Mapped Fields" Id="NewSourceField">
+                <apex:pageBlockTable value="{!Entity_Fields_Mapping_Detail }" var="ED" Id="NewSourceField1" >
+                    <apex:column headerValue="Sync" > 
+                        <apex:inputField value="{!ED.IsSync__c}" rendered="{!Not(disabledSync)}" />
+                        <apex:outputField value="{!ED.IsSync__c}" rendered="{!disabledSync}" />
+                    </apex:column> 
+                    <apex:column value="{!ED.Salesforce_Field_Label__c}" headerValue="Target Field Label"/>  
+                    <apex:column value="{!ED.Salesforce_Field__c}" headerValue="Target Field"/>
+                    <apex:column headerValue="Source Field">
+                         <apex:selectList value="{!ED.ERP_Field__c}" multiselect="false" size="1" disabled="{!disabledSourceField}" id="sourceField" >
+                            <apex:selectOptions value="{!options }"/>
+                        </apex:selectList>
+                         
+                    </apex:column> 
+                    <apex:column HeaderValue="Default Value" >
+                        <apex:inputText value="{!ED.Default_Value__c}" rendered="{!Not(disabledDefaultValue)}"  />
+                        <apex:outputField value="{!ED.Default_Value__c}" rendered="{!disabledDefaultValue}" />
+                    </apex:column> 
+                    
+                    <apex:column value="{!ED.Data_Type__c}" HeaderValue="Data Type"/>
+                    
+                </apex:pageBlockTable>
+            </apex:pageBlock>
+           </apex:tab> 
+          <apex:tab label="Filter"  switchType="client"   >
+            
+            <apex:pageBlock title="Filter Fields" Id="FilterField">
+                
+                <apex:panelGrid id="IdBtnFilterPanel" columns="3">
+                    <apex:commandButton reRender="IdLog,FilterField,IdBtnFilterPanel" action="{!AddFilterRow}" onclick="showLoading();"
+                     value="Add Filter Row" oncomplete="hideLoading();" />    
+                     
+                    <apex:commandButton reRender="IdLog,FilterField,IdBtnFilterPanel" action="{!RemoveFilterRow}" onclick="showLoading();"
+                     value="Remove Filter Row" oncomplete="hideLoading();" /> 
+                                
+                </apex:panelGrid>      
+            
+                <apex:pageBlockTable value="{!Entity_Sync_Filter_Detail}" var="FF"  >
+                    
+                     <apex:column headerValue="Select" > 
+                        <apex:inputCheckbox value="{!FF.IsSync__c}" disabled="{!disabledFilterSelect}" />
+                    </apex:column> 
+                    
+                    <apex:column headerValue="Active" > 
+                        <!--<apex:inputField value="{!FF.Active__c}" />-->
+                        <apex:inputCheckbox value="{!FF.Active__c}" disabled="{!disabledFilterActive}" />
+                    </apex:column> 
+                    
+                    <apex:column headerValue="Source Field"> 
+                        
+                        <apex:selectList value="{!FF.Field__c}" multiselect="false" size="1" disabled="{!disabledFilterSourceFld}" >
+                            <apex:selectOptions value="{!options }"/>
+                        </apex:selectList>
+                        
+                    </apex:column> 
+                       
+                    <apex:column HeaderValue="Operator">
+                        <apex:inputField value="{!FF.Operator__c}" rendered="{!Not(disabledFilterOperator)}" />
+                        <apex:outputField value="{!FF.Operator__c}" rendered="{!disabledFilterOperator}" />
+                    </apex:column> 
+                    
+                    <apex:column HeaderValue="Value">
+                        <apex:inputField value="{!FF.Value__c}" rendered="{!Not(disabledFilterValue)}"/>
+                        <apex:outputField value="{!FF.Value__c}" rendered="{!disabledFilterValue}"/>
+                    </apex:column> 
+                      
+                    
+                </apex:pageBlockTable>
+              </apex:pageBlock>  
+          </apex:tab>
+          <apex:tab label="Relationship"  switchType="client"  >
+              
+              <apex:pageBlock title="Parent Fields" Id="ParentFields">
+                              
+                  <apex:panelGrid id="IdBtnparentMainPanel" columns="3">
+                    <apex:commandButton reRender="IdLog,ParentFields,IdBtnparentMainPanel" action="{!AddParentRow}" onclick="showLoading();" 
+                    value="Add Row" oncomplete="hideLoading();" />    
+                    
+                    <apex:commandButton reRender="IdLog,ParentFields,IdBtnparentMainPanel" action="{!RemoveParentRow}" onclick="showLoading();" 
+                    value="Remove Row" oncomplete="hideLoading();" />               
+                </apex:panelGrid>        
+          
+                 
+                <apex:pageBlockTable value="{!Entity_Fields_Map_Parent}" var="EFMP"  >
+                
+                 <apex:column headerValue="Select" > 
+                        <apex:inputCheckbox value="{!EFMP.IsSync__c}" disabled="{!disabledFilterSelect}" />
+                    </apex:column>
+                    
+                    
+                    <apex:column headerValue="Target Field">
+                         <apex:selectList value="{!EFMP.Target_Field__c}" multiselect="false" size="1" disabled="{!disabledRAccountID}">
+                            <apex:selectOptions value="{!targetoptions}"/>
+                        </apex:selectList>                        
+                    </apex:column> 
+                    
+                    <apex:column headerValue="Source Field">
+                         <apex:selectList value="{!EFMP.Source_Field__c}" multiselect="false" size="1" disabled="{!disabledRSourceFld}">
+                            <apex:selectOptions value="{!options }"/>
+                        </apex:selectList>
+                    </apex:column>
+                    
+                    <apex:column headerValue="Parent Object">
+                         <apex:selectList value="{!EFMP.Parent_Object_Name__c}" multiselect="false" size="1" disabled="{!disabledRParentObj}">
+                            <apex:selectOptions value="{!sfObjectsList}"/>
+                        </apex:selectList>
+                    </apex:column> 
+                    
+                </apex:pageBlockTable>
+              </apex:pageBlock> 
+          </apex:tab>
+          
+          <apex:tab label="Logs"  switchType="client"  >
+              
+              <apex:pageBlock title="Log" Id="Log">    
+                <apex:pageBlockTable value="{!LogDetails}" var="lg"  >                   
+                    <apex:column headerValue="Log DateTime">
+                        <apex:outputField value="{!lg.LogDateTime__c}"/>
+                    </apex:column>
+                    <apex:column headerValue="Log Description">
+                        <apex:outputField value="{!lg.Description__c}"/>
+                    </apex:column>                     
+                    <apex:column headerValue="Log Data">
+                       <apex:outputField value="{!lg.Data__c}"/>   
+                    </apex:column>                     
+                </apex:pageBlockTable>
+              </apex:pageBlock> 
+          </apex:tab>   
+        </apex:tabPanel> 
+       
+
+      <apex:pageBlock id="IDNotification">
+      <apex:actionPoller action="{!getMessage}" rerender="msg,msg1,Log,IDNotification" interval="5"/> 
+     
+     
+         <!--<div class="alert-box error"><span>error: </span>Write your error message here.</div>
+         <div class="alert-box success"><span>success: </span>Write your success message here.</div>
+         <div class="alert-box warning"><span>warning: </span>Write your warning message here.</div>-->
+         <!--<div class="alert-box error"><span>error: </span>{!LogMessage}</div>
+         <div class="alert-box success"><span>success: </span>{!LogMessage}</div>-->
+         <div class="alert-box warning" id='IdWarning'><span></span>{!LogMessage}</div>
+        <!-- <div class="alert-box notice"><span> </span>{!LogMessage}</div>-->
+         
+     
+            <Br/><Br/>
+             
+         
+      </apex:pageBlock>
+     
+        
+    </apex:form>  
+      
+    
+</apex:page>

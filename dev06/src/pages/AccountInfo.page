@@ -1,0 +1,91 @@
+<apex:page standardController="Account" extensions="AccountInfoController" tabStyle="Account" sidebar="false">
+    <c:LoadBarComponent />
+    <c:InactiveComponent rendered="{!InactiveIntegration}"></c:InactiveComponent> 
+    
+    <c:NoRightsComponent rendered="{!AND(if(JSENCODE(ProfileName)=='System Administrator',false,true),NOT(ShowERPDetails))}"></c:NoRightsComponent>
+    <apex:pageMessages id="IdLog" ></apex:pageMessages>
+
+    <apex:stylesheet value="{!URLFOR($Resource.IntegrationResources,'/CSS/DataViewPage.css')}"/>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery.min.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery-ui.min.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery.serializeJSON.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/Validation/jquery.validate.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/Validation/jquery.validate.min.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources,'Script/Lookup.js')}" ></script>
+    <script type="text/javascript">
+      
+      var j$ = jQuery.noConflict();
+      
+      function BackToParent()
+      {
+            showLoading();  
+            BackToParent(); 
+      }
+      
+      function fncRefreshEnquiryTab(ChildInquiry,ChildField,ChildValue)
+      {    
+            showLoading();
+            ShowDataPage(ChildInquiry,ChildField,ChildValue); 
+      }
+      
+      
+      function fncdisplayDetail(ChildInquiry, ChildField, ChildValue)
+      {
+          showLoading();
+         
+          displayCustomerDetail(ChildInquiry, ChildField, ChildValue);   
+      }
+      
+      function ResetBottomNavExtParent()
+      {
+          j$(".bottomNavExt").parent().removeClass();
+      }
+      hideLoading();
+    </script> 
+    
+    <apex:outputPanel rendered="{!OR(if(JSENCODE(ProfileName)=='System Administrator',true,false),(ShowERPDetails))}">
+    
+        <apex:sectionHeader title="Details for" subtitle="{!Account.name}" />
+        <apex:outputLink value="/{!Account.id}" style="font-size:11px;text-decoration:none;font-family:Verdana,Arial,serif;color:#015ba7;">&nbsp;&nbsp;&nbsp;&#60;&#60; Back to {!Account.name}</apex:outputLink>
+        
+        <br/>
+        
+        <div style="text-align:center;font-family: Arial,Helvetica,sans-serif;">
+        <apex:outputPanel layout="block" id="opInquiryLinks"> 
+            <apex:dynamicComponent componentValue="{!InquiryLinks}" rendered="true"/>
+        </apex:outputPanel>     
+        </div>
+        <br/>
+        
+        <apex:form >
+            <apex:actionFunction name="BackToParent" action="{!BackToParent}"  oncomplete="hideLoading(); ResetBottomNavExtParent();" reRender="opInquiry,IdLog" >  
+                      <apex:param name="myParam" value=""/>
+            </apex:actionFunction>
+            
+            <apex:actionFunction name="PageSizeContent" action="{!updatePagesize}" oncomplete="hideLoading();"  reRender="opInquiry,IdLog" >                 
+                    <apex:param name="maxcount" value="maxcount" assignTo="{!selectedPagesize}"/>
+             </apex:actionFunction>
+            
+            <apex:actionFunction name="ShowDataPage" action="{!ShowDataPage}"  oncomplete="hideLoading();ResetBottomNavExtParent();" reRender="opInquiry,IdLog" >  
+                      <apex:param name="ChildInquiry" value="ChildInquiry" assignTo="{!ChildInquiry}"/>
+                      <apex:param name="ChildField"   value="ChildField"   assignTo="{!ChildField}"/>
+                      <apex:param name="ChildValue"   value="ChildValue"   assignTo="{!ChildValue}"/>
+             </apex:actionFunction>
+            
+            <apex:actionFunction name="displayCustomerDetail" action="{!DisplayDetail}"  oncomplete="hideLoading(); ResetBottomNavExtParent()" reRender="opInquiry,IdLog">  
+                      <apex:param name="ChildInquiry"   value="ChildInquiry"   assignTo="{!ChildInquiry}"/>
+                      <apex:param name="ChildField"     value="ChildField"     assignTo="{!ChildField}"/>
+                      <apex:param name="ChildValue"     value="ChildValue"     assignTo="{!ChildValue}"/>
+            </apex:actionFunction> 
+                 
+            <apex:outputPanel layout="block" id="opInquiry"> 
+               <apex:outputPanel layout="block" rendered="{!bShowParentURL}" style="margin-bottom:5px !important"> 
+                   <a href='javascript:void(0);' onclick="showLoading();BackToParent();" style="font-size:11px;text-decoration:none;font-family:Verdana,Arial,serif;color:#015ba7;" >  &nbsp;&nbsp;&nbsp;&#60;&#60; Back to {!ParentText}</a>
+                   
+               </apex:outputPanel>            
+               <apex:dynamicComponent id="dcMainTab"  componentValue="{!CustomerEnquiryPage}"/>
+            </apex:outputPanel> 
+           
+        </apex:form>
+     </apex:outputPanel>
+</apex:page>

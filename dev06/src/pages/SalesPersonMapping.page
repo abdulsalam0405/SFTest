@@ -1,0 +1,451 @@
+<apex:page sidebar="false" standardController="User" extensions="SalesPersonMappingCntlr" tabStyle="ERP_Administration__tab" docType="html-5.0" showHeader="false">
+
+        
+  <c:LoadBarComponent />
+    <c:NoRightsComponent rendered="{!AND(if(JSENCODE(ProfileName)=='System Administrator',false,true),NOT(bAdministration))}"></c:NoRightsComponent>
+
+    <style type="text/css">
+        .bPageBlock {
+            border-top: 4px solid #63a4c5 !important;
+        }
+        
+        .pbSubheader {
+            background-color: #63a4c5 !important;
+        }
+        .pageTitleIcon
+        {
+            background-image : none !important;
+            width :35px !important;
+            height:35px !important;
+        }
+        .tblEntity 
+        {
+            width: 400px;
+            margin:0 auto;
+            border-collaps:collaps;
+        }
+        .bPageBlock
+        {
+            font-size: 12px; !important;
+        } 
+        .activeTab 
+        {
+            background-color: #236FBD; 
+            color:white;
+            background-image:none;
+            border-top-left-radius:5px;
+            border-top-right-radius:5px
+        }
+        .inactiveTab 
+        {
+            background-color: lightgrey; 
+            color:black; 
+            background-image:none;
+            border-top-left-radius:5px;
+            border-top-right-radius:5px
+        }
+        .hdr{font-weight:bold;}
+        .rich-tab-header{font-size: 12px;}
+        .rich-tabhdr-side-cell{border:none;}
+        .rich-tabpanel-content{font-size: 12px;}
+        .refreshListButton1
+        {
+            background: url(/img/alohaSkin/sync.png) top left no-repeat !important;
+            width: 22px ;
+            height: 23px;
+            vertical-align: middle;
+            background-position: 2px 3px !important;
+        }
+        .ConFailed
+        {
+            color:red;
+            font-size:100%;
+            font-weight:bold;
+        }
+        .ConSuccess
+        {
+            color:green;
+            font-size:100%;
+            font-weight:bold;
+        }
+        .data2Col
+        {
+            padding-left: 0px !important;
+            padding-right: 0px !important;
+        }
+        .error{border: 1px solid #c00 !important;}
+        label.error
+        {
+            border: 0px !important;
+            margin-left:5px !important; 
+            color:red !important;
+        }
+        
+        .labelCol
+        {
+            padding-right: 15px !important;
+        }
+    </style>
+   <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery.min.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery-ui.min.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery.serializeJSON.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/Validation/jquery.validate.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/Validation/jquery.validate.min.js')}" ></script>
+    <!--<link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css"></link>-->
+    <link rel="stylesheet" href="{!URLFOR($Resource.IntegrationResources, '/Jquery/ui/1.10.4/themes/smoothness/jquery-ui.css')}"></link>
+    
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources,'/Script/Lookup.js')}" ></script>
+    
+    <script type="text/javascript">
+        var j$ = jQuery.noConflict();
+
+        j$(document).ready(function () 
+        {
+            hideLoading();
+            
+            j$(".pageTitleIcon").attr("src", "{!URLFOR($Resource.IntegrationResources,'/Images/Administration/Map_Salespersons.gif')}");
+            
+            var MapForm=j$("[id$='frmMap']");
+            MapForm.validate();
+              
+            j$("[id$='SyncIntegration']").rules('add', {required: true});
+            
+            j$("[id$='btnSave']").click(function()
+            {
+                if(j$(MapForm).valid())
+                    fncSave();
+                
+                return false;
+            });            
+            
+            if('{!JSENCODE(DefaulIntegrationID)}' != '')
+            {
+                RefreshMapping(getElementByIdCS('SyncIntegration_lkid').value)
+            }
+        });
+        
+        function ClearMapping(UserID)
+        {
+            j$('#'+UserID+'_Salesperson_lkid').val('');
+            j$('#'+UserID+'_Salesperson').val('');
+            j$('#'+UserID+'_Salesperson_fld2').val('');
+        }   
+             
+        function fncSave()
+        {
+            showLoading();
+            
+            var Mapping = new Array();
+            
+            j$('.Mapping').each(function( index ) 
+            {
+                var Map=j$(this).html().trim().split('_');
+                
+                var UserId=Map[0];
+                var MappingId= Map.length>1 ? Map[1] :"";
+                var SalespersonId=j$('#'+Map[0]+'_Salesperson_lkid').val();
+                
+                var iMap={};
+                iMap["UserId"]=UserId;
+                iMap["MappingId"]=MappingId;
+                iMap["SalespersonId"]=SalespersonId;
+                iMap["IntegrationKey"]=getElementByIdCS('SyncIntegration_lkid').value;
+                
+                Mapping[index]=iMap;
+            });
+            
+            try 
+            {
+                Visualforce.remoting.Manager.invokeAction('{!$RemoteAction.SalesPersonMappingCntlr.SaveMapping}',Mapping,
+            
+                function (result, event) 
+                {
+                    if (event.status) 
+                    {
+                        hideLoading();
+                        var msg='';
+                        if(result)
+                            fncDisplayMessage('Confirm','Mapping saved successfully.');
+                        else
+                            fncDisplayMessage('Error','Some error occured while saving mapping.');
+                            
+                       /* j$( "#action-message" ).html(msg);
+                        j$( "#dialog-action-message" ).dialog(
+                        { 
+                            modal:true, 
+                            title: 'Save',
+                            position: { my: "center", at: "center", of: window },
+                            buttons: 
+                            { 
+                                Ok: function() 
+                                { 
+                                    j$( this ).dialog( "close" );                                   
+                                }
+                            }
+                        }); 
+                        
+                        j$( "#dialog-action-message" ).on( "dialogclose", function( event, ui ) {fncCancel();} ); */                      
+                        
+                        fncCancel();                      
+                    }
+                }, {buffer: false, escape: true, timeout: 120000 });
+            }
+            catch (e) 
+            {
+                //fncShowMessage("Error:" + e.message,'Save');
+                fncDisplayMessage('Error',e.message);
+            }
+        }
+        
+        function fncCancel()
+        {
+            showLoading();
+            if(j$('#SyncIntegration_lkid').val() !='')
+            {
+                j$('#SyncIntegration_lkid').val('');
+                j$('#SyncIntegration').val('');
+                
+                j$("[id$='FirstName']").val('');
+                j$("[id$='LastName']").val('');
+                
+                //RefreshMapping(getElementByIdCS('SyncIntegration_lkid').value);
+                
+            }
+            
+            fncToggleSections('Cancel');
+            hideLoading();
+            return false;
+        }
+        
+        function fncShowMessage(message,strTitle)
+        {
+            j$( "#message" ).html(message);
+            j$( "#dialog-message" ).dialog({ modal:true,title:strTitle, position: { my: "center", at: "center", of: window }, buttons: { Ok: function() { j$( this ).dialog( "close" );}}});
+        }
+        
+        function fncToggleSections(btnName) 
+        {
+            if(btnName == "Find") 
+            {
+                //divFilterSection
+                j$("#divUserList").show();
+                j$('.btn').each(function() 
+                {
+                    if(this.id== 'btnSave' || this.id== 'btnCancel') 
+                    {
+                        j$("[id$='"+ this.id +"']").show();
+                    }
+                });
+                
+                //j$("[id$=btnAutoMap]").removeAttr("disabled").removeClass("btnDisabled").addClass("btn");
+            }
+            else 
+            {
+                j$("#divUserList").hide();
+                j$('.btn').each(function() 
+                {
+                    if(this.id== 'btnSave' || this.id== 'btnCancel') 
+                        j$("[id$='"+ this.id +"']").hide();
+                });
+                
+                //j$("[id$=btnAutoMatch]").attr("disabled", "disabled").removeClass("btn").addClass("btnDisabled");
+            }
+        }
+        
+        
+        
+        //Show Apex Message
+        function fncDisplayMessage(Type,Message)
+        {
+            j$('#imgError').hide();
+            j$('#imgWarning').hide();
+            j$('#imgConfirm').hide(); 
+            j$('#imgInfo').hide();
+        
+            switch(Type)
+            {
+                case "Error":
+                    j$('#imgError').show();
+                    break;
+                case "Warning":
+                    j$('#imgWarning').show();
+                    break;
+                case "Confirm":
+                    j$('#imgConfirm').show();
+                    break;
+                case "Info":
+                    j$('#imgInfo').show();
+                    break;
+            }
+        
+            j$('#msgHeader').show();
+            j$('#messages1').html(Message);
+        
+            j$('#msgHeader').fadeIn();
+            j$('#msgHeader').fadeOut(3000,"linear"); 
+        }
+    </script>
+    
+    <apex:pageBlock rendered="{!OR(if(JSENCODE(ProfileName)=='System Administrator',true,false),(bAdministration))}" >
+    <apex:sectionHeader title="Salesperson Mapping"/>
+   <apex:outputLink value="/apex/HomeSetting" style="font-size:11px;text-decoration:none;font-family:Verdana,Arial,serif;color:#015ba7;">&nbsp;&nbsp;&nbsp;&#60;&#60; Back to Home</apex:outputLink>
+    <br/>
+    <br/>
+    <apex:form id="frmMap">   
+        <apex:pageBlock mode="detail">
+            
+            <div class="message infoM3" role="alert" id="msgHeader" style="display:none">
+                <table border="0" cellpadding="0" cellspacing="0" class="messageTable" style="padding:0px;margin:0px;">
+                    <tbody>
+                        <tr valign="top">
+                            <td>
+                                <div id="imgError" style="display:none"><img alt="error" class="msgIcon" src="/s.gif" title="error" style="background-image:url(/img/msg_icons/error24.png);" /></div>
+                                <div id="imgWarning" style="display:none"><img alt="warning" class="msgIcon" src="/s.gif" title="warning" style="background-image:url(/img/msg_icons/warning24.png);" /></div>
+                                <div id="imgConfirm" style="display:none"><img alt="confirm" class="msgIcon" src="/s.gif" title="confirm" style="background-image:url(/img/msg_icons/confirm24.png);" /></div>
+                                <div id="imgInfo" style="display:none"><img alt="info" class="msgIcon" src="/s.gif" title="info" style="background-image:url(/img/msg_icons/info24.png);" /></div>
+                            </td>
+                            <td class="messageCell"><div id="messages1" class="messageText"><span id="idspan"><h4></h4></span><br/></div></td>
+                        </tr>
+                        <tr><td></td><td></td></tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div id="standardMsg" ><apex:pageMessages id="messages"/></div>
+            <apex:actionFunction name="RefreshMapping" reRender="MappingList,messages" action="{!GetUserMapping}" oncomplete="fncToggleSections('Find');hideLoading();">
+                <apex:param name="Config" assignTo="{!ConfigId}" value=""/>
+            </apex:actionFunction>
+            
+            <apex:actionFunction name="Find" action="{!SearchUser}" oncomplete="hideLoading();" reRender="MappingList,messages">
+                <apex:param name="Config" assignTo="{!ConfigId}" value=""/>
+            </apex:actionFunction> 
+            
+            <apex:actionFunction name="AutoMap" action="{!AutoMap}" oncomplete="hideLoading();" reRender="MappingList,messages">
+                <apex:param name="Config" assignTo="{!ConfigId}" value=""/>
+            </apex:actionFunction>
+            
+            <div class="pbSubheader brandTertiaryBgr first tertiaryPalette"><h3>Filter Section</h3></div>
+            <div id="divFilterSection">
+                <table style="width:80%">
+                    
+                    <!--- New One--->
+                    <tr>
+                        <td class="hdr">
+                            <apex:outputLabel for="SyncIntegration" style="margin-left:30px">Integration  </apex:outputLabel>
+                        </td>
+                        <td class="hdr">
+                            <span>
+                                <input type="hidden" name="SyncIntegration_lkid" id="SyncIntegration_lkid" value="{!DefaulIntegrationID}"/> 
+                                <input type="hidden" name="SyncIntegration_lkold" id="SyncIntegration_lkold" value="null"/>
+                                <input type="hidden" name="SyncIntegration_lktp" id="SyncIntegration_lktp" value="{!ConfigObjectPrefix}"/>
+                                <input type="hidden" name="SyncIntegration_lspf" id="SyncIntegration_lspf" value="0"/>
+                                <input type="hidden" name="SyncIntegration_lspfsub" id="SyncIntegration_lspfsub" value="0"/>
+                                <input type="hidden" name="SyncIntegration_mod" id="SyncIntegration_mod" value="0"/>
+                                <input value="{!DefaulIntegrationName}"  style="margin-left:5px" readonly="readonly" type="text" name="SyncIntegration" id="SyncIntegration" maxlength="255" size="30" onchange="showLoading();getElementByIdCS('SyncIntegration_mod').value='1'; RefreshMapping(getElementByIdCS('SyncIntegration_lkid').value);fncToggleSections('Find');"/>
+                                <a href="javascript:void(0)" onclick="javascript:openLookup('SyncIntegration','frmMap','{!JSENCODE(ConfigObjectPrefix)}','Name','GUMU_Lite__ERP_System__c','GUMU_Lite__Web_Service_URL__c','','','GUMU_Lite__Inactive__c','true','notequal','','','');" 
+                                id="SyncIntegration_lkwgt" tabindex="2" title="Parent Account Lookup (New Window)" >
+                                    <img src="/s.gif" alt="Select Integration(New Window)" class="lookupIcon" onblur="this.className = 'lookupIcon';" onfocus="this.className = 'lookupIconOn';" onmouseout="this.className = 'lookupIcon';this.className = 'lookupIcon';" onmouseover="this.className = 'lookupIconOn';this.className = 'lookupIconOn';" title="Select Integration(New Window)"/>
+                                </a>                            
+                            </span>
+                        </td>
+                        <td class="hdr">
+                            
+                        </td>
+                        <td class="hdr" >
+                        </td>
+                        <td >
+                            
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="hdr">
+                            <apex:outputLabel for="FirstName"> User First Name </apex:outputLabel>
+                        </td>
+                        <td class="hdr">
+                            <apex:inputText id="FirstName" value="{!FirstName}" style="margin-left:5px" size="30"> </apex:inputText>
+                        </td>
+                        <td class="hdr">
+                            <apex:outputLabel for="FirstName"> User Last Name </apex:outputLabel>
+                        </td>
+                        <td class="hdr">
+                            <apex:inputText id="LastName" value="{!LastName}" style="margin-left:5px" size="30"> </apex:inputText>
+                        </td>
+                        <td>
+                            <apex:commandButton value=" Find " onclick="showLoading();Find(getElementByIdCS('SyncIntegration_lkid').value)" id="btnFind" reRender="none" oncomplete="fncHideMessage();"/>
+                            <apex:commandButton value=" Auto Map " onclick="showLoading();AutoMap(getElementByIdCS('SyncIntegration_lkid').value)" id="btnAutoMap" style="margin-left:10px" reRender="none" oncomplete="fncHideMessage();"/>                        
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <br/>
+            <div id="divUserList" style="display:none">
+                <apex:pageBlockSection title="Map Salesperson" collapsible="false" columns="1" id="MappingList">
+                    <apex:outputPanel >
+                        <table style="width:100%;" class="list" border="1" cellspacing="0" cellpadding="5">
+                            <tr class="headerRow">
+                                <td class="hdr" style="display:none;">Id</td>
+                                <td class="hdr">First Name</td>
+                                <td class="hdr">Last Name</td>
+                                <td class="hdr">Salesforce Username</td>
+                                <td class="hdr">Email Address</td>
+                                <td class="hdr" style="width:20%">ERP Sales Person</td>  
+                                <td class="hdr">ERP Sales Person Name</td>                        
+                            </tr>
+                            <apex:repeat value="{!Mappings}" var="map" id="MappingList">
+                            <tr class="dataRow" >
+                                <td style="display:none;"><apex:outputtext styleClass="Mapping" value="{!map['SFUserID']}_{!map['MappingId']}" /></td>
+                                <td><apex:outputtext value="{!map['SFFirstName']}" /></td>
+                                <td><apex:outputtext value="{!map['SFLastName']}" /></td>
+                                <td><apex:outputtext value="{!map['SFUsername']}" /></td> 
+                                <td><apex:outputtext value="{!map['SFEmail']}" /></td> 
+                                <td style="width:20%">
+                                    <input type="hidden" name="{!map['SFUserID']}_Salesperson_lkid" id="{!map['SFUserID']}_Salesperson_lkid" value="{!map['SPId']}"/>
+                                    <input type="hidden" name="{!map['SFUserID']}_Salesperson_lkold" id="{!map['SFUserID']}_Salesperson_lkold" value="null"/>
+                                    <input type="hidden" name="{!map['SFUserID']}_Salesperson_lktp" id="{!map['SFUserID']}_Salesperson_lktp" value="{!SalesObjectPrefix}"/>
+                                    <input type="hidden" name="{!map['SFUserID']}_Salesperson_lspf" id="{!map['SFUserID']}_Salesperson_lspf" value="0"/>
+                                    <input type="hidden" name="{!map['SFUserID']}_Salesperson_lspfsub" id="{!map['SFUserID']}_Salesperson_lspfsub" value="0"/>
+                                    <input type="hidden" name="{!map['SFUserID']}_Salesperson_mod" id="{!map['SFUserID']}_Salesperson_mod" value="0"/>
+                                    
+                                    <input type="text" name="{!map['SFUserID']}_Salesperson" id="{!map['SFUserID']}_Salesperson" value="{!map['SPCode']}" readonly="readonly"  maxlength="255" onchange="getElementByIdCS('{!map['SFUserID']}_Salesperson_lkid').value='';getElementByIdCS('{!map['SFUserID']}_Salesperson_mod').value='1';" style="width:65% !important"/>
+                                    <a href="javascript:void(0)" onclick="javascript:openLookup('{!map['SFUserID']}_Salesperson','frmMap','{!JSENCODE(SalesObjectPrefix)}','GUMU_Lite__Salesperson_Code__c','GUMU_Lite__Salesperson_Description__c','','','','GUMU_Lite__Integration_Key__c',getElementById('SyncIntegration_lkid').value,'equal','','','');" 
+                                    id="{!map['SFUserID']}_Salesperson_lkwgt" tabindex="2" title="Select Salesperson(New Window)">
+                                    
+                                    <!--<a href="javascript:void(0)" onclick="javascript:openLookup('{!map['SFUserID']}_Salesperson','frmMap','{!JSENCODE(SalesObjectPrefix)}','Salesperson_Description__c','Salesperson_Code__c','','','','Integration_Key__c',getElementById('SyncIntegration_lkid').value,'equal','','','');" 
+                                    id="{!map['SFUserID']}_Salesperson_lkwgt" tabindex="2" title="Select Salesperson(New Window)">-->
+                                        <img src="/s.gif" alt="Select Salesperson(New Window)" class="lookupIcon" onblur="this.className = 'lookupIcon';" onfocus="this.className = 'lookupIconOn';" onmouseout="this.className = 'lookupIcon';this.className = 'lookupIcon';" onmouseover="this.className = 'lookupIconOn';this.className = 'lookupIconOn';" title="Select ERP sales person(New Window)"/>
+                                    </a>
+                                    <a href="javascript:void(0)" onclick="ClearMapping('{!map['SFUserID']}')" id="{!map['SFUserID']}_lnkClear" class="ClearMap"> clear </a>
+                                </td> 
+                                <td>
+                                    <input type="text" name="{!map['SFUserID']}_Salesperson_fld2" id="{!map['SFUserID']}_Salesperson_fld2" value="{!map['SPDesc']}" readonly="readonly" style="width:95% !important"/> 
+                                </td>
+                                
+                                                                                                          
+                            </tr>                        
+                            </apex:repeat>              
+                        </table>
+                    </apex:outputPanel>
+                </apex:pageBlockSection>
+            </div>
+            <apex:pageBlockButtons >
+                <input type="Submit" id="btnSave" value=" Save " class="btn" style="display:none"/>
+                <input type="button" id="btnCancel" value=" Cancel " class="btn" onclick="fncCancel();" style="display:none"/>
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+    </apex:form>
+    
+    <div id="dialog-message" title="Message" style="display:none">
+        <p>
+            <span class="ui-icon ui-icon-circle-check" style="float:left; margin:0 7px 50px 0;"></span>
+            <span id="message"></span>
+        </p>  
+    </div>
+    
+    <div id="dialog-action-message" title="Message" style="display:none">
+        <p>
+            <span class="ui-icon ui-icon-circle-check" style="float:left; margin:0 7px 50px 0;"></span>
+            <span id="action-message"></span>
+        </p>  
+    </div>
+    </apex:pageBlock>
+</apex:page>

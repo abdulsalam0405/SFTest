@@ -1,0 +1,5 @@
+<apex:page standardController="Data_Page__c" sidebar="false" extensions="EnquiryMaintenanceController" >
+  
+  <apex:detail id="IdEnquiryDetial" relatedList="true" relatedListHover="true" />
+  
+</apex:page>

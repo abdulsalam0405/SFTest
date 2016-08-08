@@ -1,0 +1,416 @@
+<apex:page standardController="Account" extensions="PromoteCustomerX3Controller"  sidebar="false" docType="html-5.0">
+  <c:LoadBarComponent />
+  
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery.min.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery-ui.min.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery.serializeJSON.js')}" ></script>
+    <!--<script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/Validation/jquery.validate.js')}" ></script>-->
+   <!--<script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/Validation/jquery.validate.min.js')}" ></script>-->
+    <!--<link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css"></link>-->
+    <link rel="stylesheet" href="{!URLFOR($Resource.IntegrationResources, '/Jquery/ui/1.10.4/themes/smoothness/jquery-ui.css')}"></link> 
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources,'/Script/Lookup.js')}" ></script>
+    
+      <style type="text/css">
+        .tblEntity 
+        {
+            width: 400px;
+            margin:0 auto;
+            border-collaps:collaps;
+        }
+        
+        .data2Col
+        {
+            padding-left: 0px !important;
+            padding-right: 0px !important;
+        }
+        .error{border: 1px solid #c00 !important;}
+        label.error
+        {
+            border: 0px !important;
+            margin-left:5px !important; 
+            color:red !important;
+        }
+        
+        .pageTitleIcon {
+            background-image: url(/img/sprites/master.png) !important;
+            background-position: 0px -950px !important;
+            width: 32px !important;
+            height: 32px !important;
+        }
+        
+        .labelCol
+        {
+            padding-right: 15px !important;
+        }
+        
+        .ui-widget 
+        {
+            font-family: Verdana,Arial,sans-serif !important;
+            font-size: 1.1em !important;
+        }
+        .ui-widget-header 
+        {
+            border: 1px solid #aaaaaa !important;
+            background: #cccccc !important;
+            color: #222222 !important;
+            font-weight: bold !important;
+        }
+        .ui-widget-content 
+        {
+            border: 1px solid #aaaaaa !important;
+            background: #ffffff !important;
+            color: #222222 !important;
+        }
+        .ui-progressbar 
+        {
+            //position: relative;
+            height:20px !important;
+            padding-right:0px !important;
+            margin-right:0px !important;
+        }
+        .ui-progressbar-value
+        {
+            height:20px !important;
+            background: #63a4c5 !important;
+        }
+        .progress-label 
+        {
+            //position: absolute;
+            margin-left: 10px;
+            text-align: center;
+            top: 4px;
+            font-size:12px;
+            font-weight: bold;
+            text-shadow: 1px 1px 0 #fff;
+        }
+        .bPageTitle
+        {
+            padding: 5px 0px !important;
+            margin-bottom: 5px !important;
+        }
+    </style>
+    
+    <link rel="stylesheet" href="{!URLFOR($Resource.Jquery, '/ui/1.10.4/themes/smoothness/jquery-ui.css')}"></link>
+    <script type="text/javascript">
+        
+        var j$ = jQuery.noConflict();
+
+        var AccountId='{!JSENCODE(Account.Id)}';
+        var IntegrationName='{!JSENCODE(IntegrationName)}';
+        var Customer_Number='{!JSENCODE(Account.ERP_Customer_Number__c)}';
+        var IntegrationId ='{!JSENCODE(Account.Integration_Key__c)}';
+        var gERPName;
+        var ERPCompanyCode = '';
+        var ERPSystemName = '{!JSENCODE(ERPSystemName)}';
+        
+        j$(document).ready(function () 
+        {
+             //debugger;
+            // Hide loading image
+            hideLoading();
+            
+            j$("[id$='btnUnlink']").each(function()
+            {
+                j$(this).hide();
+            });
+            
+            if(Customer_Number !='' && Customer_Number !=null && Customer_Number !='undefined')
+            {
+                 var UniqueKey=Customer_Number.split('-');
+                
+                j$('#Integration_lkid').val(IntegrationId);
+                j$('#Integration').val(IntegrationName);
+                //j$("#Integration").trigger("change");
+                j$('#Integration').attr('disabled','disabled');
+                j$('#Terms_Code').attr('disabled','disabled');
+                j$('#Currency').attr('disabled','disabled');
+                j$('#Tax_rule').attr('disabled','disabled');
+                j$('#SalesPersonX3').attr('disabled','disabled');
+                j$('#Language').attr('disabled','disabled');
+                
+                
+                j$('#Category').attr('disabled','disabled');
+                j$('#ARDivision').val(UniqueKey[0]).attr('disabled','disabled');
+                
+                j$('#CustomerNo').val(UniqueKey[1]).attr('disabled','disabled');
+                
+                //j$('#CustomerNoX3').val('{!JSENCODE(CustomerNoX3)}').attr('disabled','disabled');
+                
+                j$('#CustomerNoX3').val(Customer_Number).attr('disabled','disabled');
+                
+                //j$('#SalesPersonX3').val(UniqueKey[0]).attr('disabled','disabled');
+                
+                j$("[id$='btnPromote']").each(function()
+                {
+                    if(ERPSystemName == 'SageERPX3' )
+                        j$(this).hide();
+                    else
+                         j$(this).val(' Save ');
+                });
+                
+                
+                j$("[id$='btnUnlink']").each(function()
+                {
+                    j$(this).show();
+                });
+                 
+            }
+            
+            var PromoteForm=j$("[id$='frmPromote']");
+            PromoteForm.validate();
+            
+           
+           /* j$("[id$='btnPromote']").click(function()
+            {
+                if(j$(PromoteForm).valid())
+                {
+                    switch(gERPName) {
+                        case 'Sage100ERP' :
+                            fncPromoteCustomer();
+                            break;
+                        case 'SageERPX3' :
+                            fncPromoteCustomer_X3();
+                            break;
+                    }
+                }
+                 fncPromoteCustomer_X3();
+                return false;
+            });*/
+            
+            j$("[id$='btnCancel']").click(function()
+            {
+                
+                fncRedirectToAccount()
+            });
+        }); 
+        //Redirect to View Page
+        function fncRedirectViewPage()
+        {
+          // return null;
+            window.top.location= 'https://'+window.location.host+'/' + AccountId;
+        }
+         // Redirect to Account Page
+        function fncRedirectToAccount()
+        {
+        //return null;
+           // var isPromote = '{!ispromoted}';
+            var isPromote =j$("[id$='isPromoted']").val();
+            if(isPromote=='true')
+            {
+                var Location='https://'+window.location.host+'/'+AccountId;
+                window.top.location=Location;
+            }
+        }
+        
+         // Redirect to Account Page
+        function fncPromoteCust()
+        {
+
+              var integrationKey = j$('#Integration_lkid').val();
+              console.log(' integrationKey '+integrationKey);
+              //fncPromoteCustomerX3('Currency'+j$('#Currency').val(),'Currency'+j$('#Currency').val(),'Language'+j$('#Language').val(),'Tax_rule'+j$('#Tax_rule').val(),'Tax_rule'+j$('#Tax_rule').val(),'Terms_Code'+j$('#Terms_Code').val(),'CustomerNoX3'+ j$("[id$='CustomerNoX3']").val());
+              fncPromoteCustomerX3(j$('#Category').val(),j$('#Currency').val(),j$('#Language').val(),j$('#Tax_rule').val(),j$('#Terms_Code').val(),j$("[id$='CustomerNoX3']").val(),j$('#SalesPersonX3').val(),integrationKey);
+        }
+        function displayfieldValue(input)
+        {
+            debugger;
+            var integrationKey=j$('#Integration_lkid').val();
+            fncCategoryDefaultValues(input.value,integrationKey);
+    
+        }
+      
+       
+    </script>
+    
+     <apex:form >
+         <apex:outputPanel id="OPPanel">
+             <apex:input id="isPromoted" value="{!ispromoted}" disabled="true" style="display:none"></apex:input>
+         </apex:outputPanel>
+         <apex:actionRegion >    
+             <apex:pageMessages id="Log" ></apex:pageMessages>
+             <apex:actionFunction name="fncPromoteCustomerX3" action="{!PromoteCustomer_X3}" oncomplete="fncRedirectToAccount(); hideLoading();" reRender="Log,OPPanel">
+                 <apex:param name="Category" assignTo="{!CategoryX3}" value="" />
+                 <apex:param name="Currency" assignTo="{!CurrencyX3}" value="" />
+                 <apex:param name="Language" assignTo="{!LanguageX3}"  value=""/>
+                 <apex:param name="Tax_rule" assignTo="{!TaxRuleX3}" value="" />
+                 <apex:param name="Terms_Code" assignTo="{!TermsCodeX3}" value="" />
+                 <apex:param name="CustomerNoX3" assignTo="{!CustomerNoX3}" value="" />
+                 <apex:param name="SalesPersonX3" assignTo="{!SalesPersonX3}" value="" />
+                 <apex:param name="IntegrationKey" value="" assignTo="{!IntegrationKey}" />                                
+             </apex:actionFunction>
+    
+            <apex:actionFunction name="fncUnlinkAccount" action="{!UnlinkAccount}" reRender="none" oncomplete="fncRedirectViewPage();" > <!-- oncomplete="fncRedirectViewPage();" -->
+            </apex:actionFunction>
+            
+            
+            <apex:actionFunction name="fncCategoryDefaultValues" action="{!GetCategoryValues}" oncomplete="hideLoading();" reRender="Log,CurrencyPanel,LangPanel,TaxRulePanel,TermCodePanel,CustomerNoX3">
+                <apex:param name="Category" assignTo="{!CategoryX3}" value="" />
+                <apex:param name="ConfigId" assignTo="{!ConfigId}" value="" />
+            </apex:actionFunction>
+            
+        </apex:actionRegion>
+        
+        <apex:outputPanel rendered="{!OR(if(JSENCODE(ProfileName)=='System Administrator',true,false),(bShowPromoteCustomer))}">
+        <apex:sectionHeader title="Promote Customer" subtitle="{!Account.name}" />
+        <apex:outputLink value="/{!Account.id}" style="font-size:11px;text-decoration:none;font-family:Verdana,Arial,serif;color:#015ba7;">&#60;&#60; Back to Home {!Account.name}</apex:outputLink>
+        <br/>
+        <br/>   
+        <apex:pageBlock mode="detail">
+       
+                <apex:pageBlockSection title="Select Integration" collapsible="false" columns="2">
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel for="Integration">Integration</apex:outputLabel>
+                        <span>
+                            <input type="hidden" name="Integration_ERP" id="Integration_ERP"  />
+                            <input type="hidden" name="Integration_lkid" id="Integration_lkid" value="{!DefaulIntegrationID}" />
+                            <input type="hidden" name="Integration_lkold" id="Integration_lkold" value="null"/>
+                            <input type="hidden" name="Integration_lktp" id="Integration_lktp" value="{ConfigObjectPrefix}"/>
+                            <input type="hidden" name="Integration_lspf" id="Integration_lspf" value="0"/>
+                            <input type="hidden" name="Integration_lspfsub" id="Integration_lspfsub" value="0"/>
+                            <input type="hidden" name="Integration_mod" id="Integration_mod" value="0"/>
+                            <input  value="{!DefaulIntegrationName}" readonly="readonly" type="text" name="Integration" id="Integration" maxlength="255" size="30" onchange="getElementByIdCS('Integration_mod').value='1';" />
+                            <a href="javascript:void(0)" onclick="javascript:if (j$('#CustomerNo').attr('disabled')==='disabled'){return false;}else{openLookup('Integration','frmPromote','{!JSENCODE(ConfigObjectPrefix)}','Name','GUMU_Lite__ERP_System__c','GUMU_Lite__Web_Service_URL__c','','','GUMU_Lite__Inactive__c','true','notequal','','','');}"                          
+                            id="Integration_lkwgt"  tabindex="2" title="Parent Account Lookup (New Window)" >
+                                <img src="/s.gif" alt="Select Integration(New Window)" class="lookupIcon" onblur="this.className = 'lookupIcon';" onfocus="this.className = 'lookupIconOn';" onmouseout="this.className = 'lookupIcon';this.className = 'lookupIcon';" onmouseover="this.className = 'lookupIconOn';this.className = 'lookupIconOn';" title="Select Integration(New Window)"/>
+                            </a>
+                        </span>
+                    </apex:pageBlockSectionItem>
+                 </apex:pageBlockSection>
+                 <apex:pageBlockSection title="Main" collapsible="false" columns="2" >
+                 <apex:pageBlockSectionItem >
+                            <apex:outputLabel for="Category">Category</apex:outputLabel>
+                            <span>
+                                <input type="hidden" name="Category_lkid" id="Category_lkid" value="000000000000000"/>
+                                <input type="hidden" name="Category_lkold" id="Category_lkold" value="null"/>
+                                <input type="hidden" name="Category_lktp" id="Category_lktp" value="{!CategoryObjectPrefix}"/>
+                                <input type="hidden" name="Category_lspf" id="Category_lspf" value="0"/>
+                                <input type="hidden" name="Category_lspfsub" id="Category_lspfsub" value="0"/>
+                                <input type="hidden" name="Category_mod" id="Category_mod" value="0"/>
+                                <div class="requiredInput">
+                                <div class="requiredBlock"></div> 
+                                <input readonly="readonly" value="{!CategoryX3}" type="text" name="Category" id="Category" maxlength="255" size="30" onchange="showLoading();getElementByIdCS('Category_mod').value='1';displayfieldValue(this);"  /> 
+                                <a href="javascript:void(0)" onclick="javascript:if(getElementById('Integration').value !=''){openLookup('Category','frmPromote','{!JSENCODE(CategoryObjectPrefix)}','GUMU_Lite__CategoryCode__c','GUMU_Lite__Category_description__c','','','','GUMU_Lite__Integration_Key__c',getElementById('Integration_lkid').value,'equal','','','');}else{fncDisplayMessage('Info','Please select the Integration first.');}"
+                                 tabindex="2" id="Category_lkwgt" title="Parent Account Lookup (New Window)">
+                                    <img src="/s.gif" alt="Select Integration(New Window)" class="lookupIcon" onblur="this.className = 'lookupIcon';" onfocus="this.className = 'lookupIconOn';" onmouseout="this.className = 'lookupIcon';this.className = 'lookupIcon';" onmouseover="this.className = 'lookupIconOn';this.className = 'lookupIconOn';" title="Select Category(New Window)"/>
+                                </a>
+                                </div> 
+                            </span>
+                        </apex:pageBlockSectionItem>
+                     
+                         <apex:pageBlockSectionItem >
+                            <apex:outputLabel for="Currency">Currency</apex:outputLabel>
+                           
+                            <apex:outputPanel id="CurrencyPanel" layout="block">
+                                <input type="hidden" name="Currency_lkid" id="Currency_lkid" value="000000000000000"/>
+                                <input type="hidden" name="Currency_lkold" id="Currency_lkold" value="null"/>
+                                <input type="hidden" name="Currency_lktp" id="Currency_lktp" value="{!CurrencyObjectPrefix}"/>
+                                <input type="hidden" name="Currency_lspf" id="Currency_lspf" value="0"/>
+                                <input type="hidden" name="Currency_lspfsub" id="Currency_lspfsub" value="0"/>
+                                <input type="hidden" name="Currency_mod" id="Currency_mod" value="0"/>
+                                <div class="requiredInput">
+                                <div class="requiredBlock"></div>
+                                <input readonly="readonly" value="{!CurrencyX3}" type="text" name="Currency" id="Currency" maxlength="255" size="30" onchange="getElementByIdCS('Currency_mod').value='1';getElementById('Currency').value='';" />
+                                <a href="javascript:void(0)" onclick="javascript:if(getElementById('Integration').value !=''){openLookup('Currency','frmPromote','{!JSENCODE(CurrencyObjectPrefix)}','GUMU_Lite__Currency_Code__c','GUMU_Lite__Currency_description__c','','','','GUMU_Lite__Integration_Key__c',getElementById('Integration_lkid').value,'equal','','','');}else{fncDisplayMessage('Info','Please select the Integration first.');}"
+                                 tabindex="2" id="Currency_lkwgt" title="Parent Account Lookup (New Window)">
+                                    <img src="/s.gif" alt="Select Integration(New Window)" required="true" class="lookupIcon" onblur="this.className = 'lookupIcon';" onfocus="this.className = 'lookupIconOn';" onmouseout="this.className = 'lookupIcon';this.className = 'lookupIcon';" onmouseover="this.className = 'lookupIconOn';this.className = 'lookupIconOn';" title="Select Currency(New Window)"/>
+                                </a>
+                                </div>
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+                         <apex:pageBlockSectionItem >
+                            <apex:outputLabel for="Language">Language</apex:outputLabel>
+                            
+                              <apex:outputPanel id="LangPanel" layout="block">
+                                <input type="hidden" name="Language_lkid" id="Language_lkid" value="000000000000000"/>
+                                <input type="hidden" name="Language_lkold" id="Language_lkold" value="null"/>
+                                <input type="hidden" name="Language_lktp" id="Language_lktp" value="{!LanguageObjectPrefix}"/>
+                                <input type="hidden" name="Language_lspf" id="Language_lspf" value="0"/>
+                                <input type="hidden" name="Language_lspfsub" id="Language_lspfsub" value="0"/>
+                                <input type="hidden" name="Language_mod" id="Language_mod" value="0"/>
+                                <div class="requiredInput">
+                                <div class="requiredBlock"></div>
+                                <input readonly="readonly" value="{!LanguageX3}" type="text" name="Language" id="Language" maxlength="255" size="30" onchange="getElementByIdCS('Language_mod').value='1';getElementById('Language').value='';"/>
+                                <a href="javascript:void(0)" onclick="javascript:if(getElementById('Integration').value !=''){openLookup('Language','frmPromote','{!JSENCODE(LanguageObjectPrefix)}','GUMU_Lite__LanguageCode__c','GUMU_Lite__LanguageDescription__c','','','','GUMU_Lite__Integration_Key__c',getElementById('Integration_lkid').value,'equal','','','');}else{fncDisplayMessage('Info','Please select the Integration first.');}"
+                                 tabindex="2" id="Language_lkwgt" title="Parent Account Lookup (New Window)">
+                                    <img src="/s.gif" alt="Select Integration(New Window)" class="lookupIcon" onblur="this.className = 'lookupIcon';" onfocus="this.className = 'lookupIconOn';" onmouseout="this.className = 'lookupIcon';this.className = 'lookupIcon';" onmouseover="this.className = 'lookupIconOn';this.className = 'lookupIconOn';" title="Select Language(New Window)"/>
+                                </a>
+                                </div>
+                             </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel for="Tax_rule">Taxrule</apex:outputLabel>
+                            <apex:outputPanel id="TaxRulePanel">
+                                <input type="hidden" name="Tax_rule_lkid" id="Tax_rule_lkid" value="000000000000000"/>
+                                <input type="hidden" name="Tax_rule_lkold" id="Tax_rule_lkold" value="null"/>
+                                <input type="hidden" name="Tax_rule_lktp" id="Tax_rule_lktp" value="{!Tax_ruleObjectPrefix}"/>
+                                <input type="hidden" name="Tax_rule_lspf" id="Tax_rule_lspf" value="0"/>
+                                <input type="hidden" name="Tax_rule_lspfsub" id="Tax_rule_lspfsub" value="0"/>
+                                <input type="hidden" name="Tax_rule_mod" id="Tax_rule_mod" value="0"/>
+                                <div class="requiredInput">
+                                <div class="requiredBlock"></div>
+                                <input readonly="readonly" value="{!TaxRuleX3}" type="text" name="Tax_rule" id="Tax_rule" maxlength="255" size="30" onchange="getElementByIdCS('Tax_rule_mod').value='1';getElementById('Tax_rule').value='';"/>
+                                <a href="javascript:void(0)" onclick="javascript:if(getElementById('Integration').value !=''){openLookup('Tax_rule','frmPromote','{!JSENCODE(Tax_ruleObjectPrefix)}','GUMU_Lite__TaxRuleCode__c','GUMU_Lite__TaxRule_Description__c','GUMU_Lite__Legislation__c','','','GUMU_Lite__Integration_Key__c',getElementById('Integration_lkid').value,'equal','','','');}else{fncDisplayMessage('Info','Please select the Integration first.');}"
+                                 tabindex="2" id="Tax_rule_lkwgt" title="Parent Account Lookup (New Window)">
+                                    <img src="/s.gif" alt="Select Integration(New Window)" class="lookupIcon" onblur="this.className = 'lookupIcon';" onfocus="this.className = 'lookupIconOn';" onmouseout="this.className = 'lookupIcon';this.className = 'lookupIcon';" onmouseover="this.className = 'lookupIconOn';this.className = 'lookupIconOn';" title="Select Tax Rule(New Window)"/>
+                                </a>
+                                </div>
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+                        
+                         <apex:pageBlockSectionItem >
+                            <apex:outputLabel for="Terms_Code">Payment Terms</apex:outputLabel>
+                            <apex:outputPanel id="TermCodePanel">
+                                <input type="hidden" name="Terms_Code_lkid" id="Terms_Code_lkid" value="000000000000000"/>
+                                <input type="hidden" name="Terms_Code_lkold" id="Terms_Code_lkold" value="null"/>
+                                <input type="hidden" name="Terms_Code_lktp" id="Terms_Code_lktp" value="{!Terms_CodeObjectPrefix}"/>
+                                <input type="hidden" name="Terms_Code_lspf" id="Terms_Code_lspf" value="0"/>
+                                <input type="hidden" name="Terms_Code_lspfsub" id="Terms_Code_lspfsub" value="0"/>
+                                <input type="hidden" name="Terms_Code_mod" id="Terms_Code_mod" value="0"/>
+                                <div class="requiredInput">
+                                <div class="requiredBlock"></div>
+                                <input readonly="readonly" value="{!TermsCodeX3}" type="text" name="Terms_Code" id="Terms_Code" maxlength="255" size="30" onchange="getElementByIdCS('Terms_Code_mod').value='1';getElementById('Terms_Code').value='';"/>
+                                <!--<a href="javascript:void(0)" onclick="javascript:if(getElementById('Integration').value !=''){openLookup('Terms_Code','frmPromote','{!JSENCODE(Terms_CodeObjectPrefix)}','Terms_Code__c','Terms_Code_description__c','','','','Integration_Key__c',getElementById('Integration_lkid').value,'equal','','','');}else{fncDisplayMessage('Info','Please select the Integration first.');}"
+                                tabindex="2" id="Terms_Code_lkwgt" title="Parent Account Lookup (New Window)"> -->
+                                <a href="javascript:void(0)" onclick="javascript:if(getElementById('Integration').value !=''){openLookup('Terms_Code','frmPromote','{!JSENCODE(Terms_CodeObjectPrefix)}','GUMU_Lite__Terms_Code__c','GUMU_Lite__Terms_Code_Description__c','GUMU_Lite__Legislation__c','','','GUMU_Lite__Integration_Key__c',getElementById('Integration_lkid').value,'equal','','','');}else{fncDisplayMessage('Info','Please select the Integration first.');}"
+                                 tabindex="2" id="Terms_Code_lkwgt" title="Parent Account Lookup (New Window)">
+                                    <img src="/s.gif" alt="Select Integration(New Window)" class="lookupIcon" onblur="this.className = 'lookupIcon';" onfocus="this.className = 'lookupIconOn';" onmouseout="this.className = 'lookupIcon';this.className = 'lookupIcon';" onmouseover="this.className = 'lookupIconOn';this.className = 'lookupIconOn';" title="Select Terms Code(New Window)"/>
+                                </a>
+                                </div>
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+                         <apex:pageBlockSectionItem >
+                        <apex:outputLabel for="SalesPersonX3">Sales Person</apex:outputLabel>
+                            <span>
+                                <input type="hidden" name="SalesPersonX3_lkid" id="SalesPersonX3_lkid" value="000000000000000"/>
+                                <input type="hidden" name="SalesPersonX3_lkold" id="SalesPersonX3_lkold" value="null"/>
+                                <input type="hidden" name="SalesPersonX3_lktp" id="SalesPersonX3_lktp" value="{!SalesPersonObjectPrefix}"/>
+                                <input type="hidden" name="SalesPersonX3_lspf" id="SalesPersonX3_lspf" value="0"/>
+                                <input type="hidden" name="SalesPersonX3_lspfsub" id="SalesPersonX3_lspfsub" value="0"/>
+                                <input type="hidden" name="SalesPersonX3_mod" id="SalesPersonX3_mod" value="0"/>
+                                <input readonly="readonly" value="{!SalesPersonX3}" type="text" name="SalesPersonX3" id="SalesPersonX3" maxlength="255" size="30" onchange="getElementByIdCS('SalesPersonX3_lkid').value='';getElementByIdCS('SalesPersonX3_mod').value='1';"/>
+                                <a href="javascript:void(0)" onclick="if(getElementById('Integration').value !=''){openLookup('SalesPersonX3','frmPromote','{!JSENCODE(SalesPersonObjectPrefix)}','GUMU_Lite__Salesperson_Code__c','GUMU_Lite__Salesperson_Description__c','','','','GUMU_Lite__Integration_Key__c',getElementById('Integration_lkid').value,'equal','','','')}else{fncDisplayMessage('Info','Please select the Integration first.');}"
+                                id="SalesPerson_lkwgt" tabindex="2" title="Parent Account Lookup (New Window)">
+                                    <img src="/s.gif" alt="Select Integration(New Window)" class="lookupIcon" onblur="this.className = 'lookupIcon';" onfocus="this.className = 'lookupIconOn';" onmouseout="this.className = 'lookupIcon';this.className = 'lookupIcon';" onmouseover="this.className = 'lookupIconOn';this.className = 'lookupIconOn';" title="Select Sales Person(New Window)"/>
+                                </a>
+                            </span>
+                        </apex:pageBlockSectionItem>
+                          <apex:pageBlockSectionItem >
+                            <apex:outputLabel for="CustomerNo">Customer No</apex:outputLabel>
+                            <!--<input type="text" size="30" id="CustomerNoX3" value="{!CustomerNoX3}" style="text-transform:uppercase" maxlength="7" />-->
+                            <apex:input id="CustomerNoX3" value="{!CustomerNoX3}" style="text-transform:uppercase" disabled="{!customerNoDisable}" />
+                        </apex:pageBlockSectionItem>
+                 </apex:pageBlockSection>
+        
+                <apex:pageBlockButtons >
+                    <!--<apex:commandButton id="btnUnlink" immediate="true" rendered="{!NOT(ISBLANK(Account.ERP_Customer_Number__c))}" value=" Unlink " styleClass="btn" action="{!UnlinkAccount}"/>-->
+                    
+                    <input type="button" id="btnUnlink"  value=" Unlink " Class="btn" onclick="fncUnlinkAccount();"  style="display:none;"/>
+                    <input type="button" id="btnPromote" value=" Promote " class="btn" onclick="showLoading();fncPromoteCust();"   />
+                    <input type="button" id="btnCancel" value=" Cancel " class="btn" onclick="showLoading();fncRedirectViewPage();"/>
+                    <apex:outputLabel value="{!Account.type}" rendered="false"></apex:outputLabel>
+                </apex:pageBlockButtons>         
+    </apex:pageBlock>
+</apex:outputPanel>
+</apex:form>
+
+</apex:page>

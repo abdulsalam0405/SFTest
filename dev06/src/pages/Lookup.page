@@ -1,0 +1,106 @@
+<apex:page controller="LookupController" title="Search" showHeader="false" sideBar="false" id="pg">
+ <c:LoadBarComponent />
+    <apex:pagemessages ></apex:pagemessages>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery.min.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery-ui.min.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery.serializeJSON.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/Validation/jquery.validate.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/Validation/jquery.validate.min.js')}" ></script>
+    <!--<link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css"></link>-->
+    <link rel="stylesheet" href="{!URLFOR($Resource.IntegrationResources, '/Jquery/ui/1.10.4/themes/smoothness/jquery-ui.css')}"></link> 
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources,'/Script/Lookup.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.NumbersOnly)}" ></script>
+
+    <script type="text/javascript">
+        
+        var j$ = jQuery.noConflict();
+        j$(document).ready(function () 
+        {
+            hideLoading(); 
+         });
+        function test(input,value)
+        {
+            if(top.window.opener.document.getElementById(input+'_fld2'))
+            { 
+                top.window.opener.document.getElementById(input+'_fld2').value =value;
+            }
+        }
+        
+        /*
+            This will be used for enter key serach box
+        */
+        function OnEnterSearchTextBox(e){
+             //On press of Enter Key 
+             if (e.keyCode == 13) 
+             {
+                //Getting all the elements in the page 
+                var allElements = document.getElementsByTagName('*'); 
+                for (var i = 0; i < allElements.length; i++)
+                {
+                    //selecting the button on which the click event has to be triggered 
+                    if (allElements[i].id.indexOf("btnGo") !=-1){
+                        //triggering the click event 
+                        allElements[i].click(); 
+                    } 
+                }
+                return false; 
+            }else{
+                return true 
+            } 
+        } 
+        window.onkeypress = OnEnterSearchTextBox; 
+    </script> 
+    
+    <apex:form >
+        <apex:outputPanel id="page" layout="block" style="margin:5px;padding:10px;padding-top:2px;">
+            <apex:actionRegion >  
+            
+                <apex:outputPanel id="top" layout="block" style="margin:5px;padding:10px;padding-top:2px;">
+                    <apex:outputLabel value="Search" style="font-weight:Bold;padding-right:10px;" for="txtSearch"/>
+                    <apex:inputText id="txtSearch" value="{!searchString}" />
+                    <span style="padding-left:5px">
+                    <apex:commandButton id="btnGo" value="Go" action="{!Search}" onclick="showLoading()"  rerender="searchResults" oncomplete="hideLoading();" ></apex:commandButton>
+                    </span>
+                </apex:outputPanel>
+ 
+                <apex:outputPanel id="pnlSearchResults" style="margin:10px;height:350px;overflow-Y:auto;" layout="block">
+                    <apex:pageBlock id="searchResults"> 
+                        <apex:pageBlockTable value="{!results}" var="a" id="tblResults">
+
+                            <apex:column >
+                                <apex:facet name="header">
+                                    <apex:outputPanel >{!SearchFieldLabel1}</apex:outputPanel>
+                                </apex:facet>
+                                <!--<apex:outputLink value="javascript:top.window.close();top.window.opener.lookupPick2('{!FormTag}','{!TextBox}_lkid','{!TextBox}','{!a.Id}','{!a[fieldToSearch1]}', false)" rendered="{!NOT(ISNULL(a.Id))}">{!a[fieldToSearch1]}</apex:outputLink>-->
+                                <apex:outputLink value="javascript:top.window.close();top.window.opener.lookupPick2('{!FormTag}',
+                                '{!TextBox}_lkid',
+                                '{!TextBox}','{!a.Id}','{!JSENCODE(a[fieldToSearch1])}', false);
+                                 test('{!TextBox}','{!JSENCODE(a[fieldToSearch2])}');" 
+                                 rendered="{!NOT(ISNULL(a.Id))}">{!a[fieldToSearch1]}</apex:outputLink>
+                                
+                            </apex:column>
+
+                            <apex:column headerValue="{!SearchFieldLabel2}" rendered="{!AND(NOT(ISBLANK(SearchFieldLabel2)), NOT(ISNULL(SearchFieldLabel2)))}">
+                                <apex:outputLabel >{!a[Fieldtosearch2 ]}</apex:outputLabel>
+                            </apex:column>
+
+                            <apex:column headerValue="{!SearchFieldLabel3}" rendered="{!AND(NOT(ISBLANK(SearchFieldLabel3)), NOT(ISNULL(SearchFieldLabel3)))}">
+                                <apex:outputLabel >{!a[Fieldtoshow1]}</apex:outputLabel>
+                            </apex:column>
+
+                            <apex:column headerValue="{!SearchFieldLabel4}" rendered="{!AND(NOT(ISBLANK(SearchFieldLabel4)), NOT(ISNULL(SearchFieldLabel4)))}">
+                                <apex:outputLabel >{!a[Fieldtoshow2]}</apex:outputLabel>
+                            </apex:column>
+
+                            <apex:column headerValue="{!SearchFieldLabel5}" rendered="{!AND(NOT(ISBLANK(SearchFieldLabel5)), NOT(ISNULL(SearchFieldLabel5)))}">
+                                <apex:outputLabel >{!a[Fieldtoshow3]}</apex:outputLabel>
+                            </apex:column>
+
+                            </apex:pageBlockTable>
+                    </apex:pageBlock>
+                </apex:outputPanel>
+                
+            </apex:actionRegion>
+        </apex:outputPanel>
+    </apex:form>
+</apex:page>

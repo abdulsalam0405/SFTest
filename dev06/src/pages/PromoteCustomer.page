@@ -1,0 +1,15 @@
+<apex:page standardController="Account" extensions="PromoteCustomerController"  sidebar="false"  docType="html-5.0" >
+<c:NoRightsComponent rendered="{!AND(if(JSENCODE(ProfileName)=='System Administrator',false,true),NOT(bShowPromoteCustomer))}"></c:NoRightsComponent>
+<!--<apex:pageMessages ></apex:pageMessages>-->
+   <!--<apex:pageBlock rendered="{!OR(if(JSENCODE(ProfileName)=='System Administrator',true,false),(bShowPromoteCustomer))}" >
+   </apex:pageBlock>-->
+     
+  <apex:include pageName="{!PromoteCustomer}" />
+  
+  <apex:outputLabel rendered="false" value="{!Account.Integration_Key__c}"></apex:outputLabel>
+  <apex:outputLabel rendered="false" value="{!Account.ERP_Customer_Number__c}"></apex:outputLabel>
+  <apex:outputLabel rendered="false" value="{!Account.Type}"></apex:outputLabel>
+  <apex:outputLabel rendered="false" value="{!Account.Name}"></apex:outputLabel>
+  <apex:outputLabel rendered="false" value="{!Account.Id}"></apex:outputLabel>
+  
+</apex:page>

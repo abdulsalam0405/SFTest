@@ -1,0 +1,173 @@
+<apex:page standardController="Ship_To__c" extensions="AddressSage300Controller" >
+    <c:LoadBarComponent />
+
+   <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery.min.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery-ui.min.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery.serializeJSON.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/Validation/jquery.validate.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/Validation/jquery.validate.min.js')}" ></script>
+    <!--<link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css"></link>-->
+    <link rel="stylesheet" href="{!URLFOR($Resource.IntegrationResources, '/Jquery/ui/1.10.4/themes/smoothness/jquery-ui.css')}"></link>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources,'/Script/Lookup.js')}" ></script>
+    <script type="text/javascript">
+        var j$ = jQuery.noConflict();
+        
+        j$(document).ready(function()
+        {
+            hideLoading();
+        });
+        
+        function fncRedirect(AccountId)
+        {
+            var getHostName = 'https://'+window.location.host+'/'+AccountId;
+            window.top.location= getHostName ;
+        }
+        
+        function EnableDisableDflShipTo(isShipTo)
+        {
+            if(isShipTo == 'No')
+               j$("[id$='DefaultShipTo']").attr('disabled','disabled');
+            else
+                 j$("[id$='DefaultShipTo']").removeAttr('disabled');
+        }
+        
+        function fncNumbersOnly(event)
+        {
+            if(event.charCode == 0 || (event.charCode >= 48 && event.charCode <= 57))
+                return true;
+            else
+                return false;
+        }
+        
+    </script>    
+    <apex:sectionHeader title="Sage 300 Address" />
+    <br/>
+    <apex:form id="frmAddress">
+        <apex:PageMessages id="message" escape="true"/>
+        <apex:pageBlock >
+           
+            <apex:pageBlockButtons location="both" >
+                <input type="button" id="btnSave" value=" Save " class="btn promote" onclick="fncSaveAddress();showLoading();"  />
+                <input type="button" id="btnSavePromote" value=" Save & Promote" class="btn promote" onclick="fncSavepromoteAddress();showLoading();"  />
+                <input type="button" id="btnCancel" value=" Cancel " class="btn" onclick="fncCancel();"/><!--fncCancel();-->
+            </apex:pageBlockButtons>
+            
+            <apex:actionFunction name="fncSaveAddress" action="{!saveAddresses}" reRender="message,OPPanel" oncomplete="if({!status=='Success'})
+                                       {fncRedirect('{!JSENCODE(glAccountID)}');};hideLoading();" >
+            </apex:actionFunction>
+             <apex:actionFunction name="fncCancel" action="{!cancelProcess}" ></apex:actionFunction>
+             
+             <apex:actionFunction name="fncSavepromoteAddress" action="{!SavepromoteAddress}" reRender="message,OPPanel" oncomplete="if({!status=='Success'})
+                                       {fncRedirect('{!JSENCODE(glAccountID)}');};hideLoading();"/>
+            
+            <apex:pageBlockSection columns="2" title="Information" id="idPageBlkSec">
+                
+                <apex:pageblockSectionItem >
+                    <apex:outputLabel value="Account"></apex:outputLabel>
+                    <apex:outputLabel id="AccountName" value="{!Addr.Account_Name}"/>                                     
+                </apex:pageblockSectionItem>
+                <apex:pageblockSectionItem >
+                    <!--<apex:outputLabel value="Account"></apex:outputLabel>
+                    <apex:outputLabel id="AccountName" value="{!Addr.Account_Name}"/> -->                                    
+                </apex:pageblockSectionItem>
+                
+                 <apex:pageblockSectionItem >
+                    <apex:outputLabel value="Address Code"></apex:outputLabel>
+                    <Apex:inputtext id="shipToCode" value="{!Addr.Ship_To_Code}" maxlength="5" disabled="{!isShipToExists}" />   
+                </apex:pageblockSectionItem>
+                
+                <apex:pageblockSectionItem >
+                    <apex:outputLabel value="Address Name"></apex:outputLabel>
+                    <apex:inputtext id="shipToName" value="{!Addr.Ship_To_Name}" maxlength="30" />
+                </apex:pageblockSectionItem>
+                                                                                                                     
+                <apex:pageblockSectionItem >
+                    <apex:outputLabel value="Address Line 1"></apex:outputLabel>
+                    <!--<Apex:inputtext id="shipToAddr1" value="{!Addr.Ship_To_Address1}"  />-->
+                    <apex:inputTextarea id="shipToAddr1" value="{!Addr.Ship_To_Address1}" style="width: 167px;" />
+                </apex:pageblockSectionItem>
+                
+                <apex:pageblockSectionItem >
+                    <apex:outputLabel value="Address Line 2"></apex:outputLabel>
+                    <!--<Apex:inputtext id="shipToAddr2" value="{!Addr.Ship_To_Address2}" />-->
+                    <apex:inputTextarea id="shipToAddr2" value="{!Addr.Ship_To_Address2}" style="width: 167px;"/>
+                </apex:pageblockSectionItem>
+                
+                <apex:pageblockSectionItem >
+                    <apex:outputLabel value="Address Line 3"></apex:outputLabel>
+                    <!--<Apex:inputtext id="shipToAddr3" value="{!Addr.Ship_To_Address3}" />-->
+                    <apex:inputTextarea id="shipToAddr3" value="{!Addr.Ship_To_Address3}" style="width: 167px;"/>
+                 </apex:pageblockSectionItem>
+                 
+                 <apex:pageblockSectionItem >
+                    <apex:outputLabel value="City"></apex:outputLabel>
+                    <Apex:inputtext id="shipToCity" value="{!Addr.Ship_To_City}" maxlength="50" />
+                 </apex:pageblockSectionItem>
+                                               
+                <apex:pageblockSectionItem >
+                    <apex:outputLabel value="State"></apex:outputLabel>             
+                    <Apex:inputtext id="ShipToState" value="{!Addr.Ship_To_State}" maxlength="10"  />
+                </apex:pageblockSectionItem>
+                
+                <apex:pageblockSectionItem >
+                    <apex:outputLabel value="Country"></apex:outputLabel>  
+                    <Apex:inputtext id="ShipToCountryCode" value="{!Addr.Ship_To_Country_Code}" maxlength="3" />
+                </apex:pageblockSectionItem>
+                
+                <apex:pageblockSectionItem >
+                    <apex:outputLabel value="Zip/Postal Code"></apex:outputLabel> 
+                    <Apex:inputtext id="ShipToZipCode" value="{!Addr.Ship_To_Zip_Code}" />
+                </apex:pageblockSectionItem>
+                
+                <!--<apex:pageblockSectionItem >
+                    <apex:outputLabel value="Telephone Ext"></apex:outputLabel>
+                    <Apex:inputtext id="TelephoneExt" value="{!Addr.Telephone_Ext}" />
+                </apex:pageblockSectionItem>-->
+                
+                <apex:pageblockSectionItem >
+                    <apex:outputLabel value="Telephone No"></apex:outputLabel> 
+                    <Apex:inputtext id="telephoneNo" value="{!Addr.Telephone_No}"  onkeypress="return fncNumbersOnly(event);"/>
+                </apex:pageblockSectionItem>
+                
+                <apex:pageblockSectionItem >
+                    <apex:outputLabel value="Fax No"></apex:outputLabel>
+                    <Apex:inputtext id="FaxNo" value="{!Addr.Fax_No}" onkeypress="return fncNumbersOnly(event);" />
+                </apex:pageblockSectionItem>
+                
+                 <apex:pageblockSectionItem >
+                    <apex:outputLabel value="Email Address"></apex:outputLabel>
+                    <Apex:inputtext id="EmailAddress" value="{!Addr.Email_Address}" style="width:300px;"/>
+                </apex:pageblockSectionItem>   
+                
+                <!--<apex:pageblockSectionItem >
+                    <apex:outputLabel value="Is Default Address?" rendered="{!bRenderDefaultAddress}"></apex:outputLabel>                               
+                    <apex:selectList id="DefaultAddress" value="{!Addr.IsPrimary}" size="1" disabled="{!bDsiableDefAddr }" rendered="{!bRenderDefaultAddress}">
+                        <apex:selectOption itemLabel="No" itemValue="No"></apex:selectOption>
+                        <apex:selectOption itemLabel="Yes" itemValue="Yes"></apex:selectOption>                        
+                    </apex:selectList>
+                </apex:pageblockSectionItem>              -->  
+                               
+                <!--<apex:pageblockSectionItem >
+                    <apex:outputLabel value="Shipping?" rendered="{!bRenderShipping}"></apex:outputLabel>                              
+                     <apex:selectList id="isShipTo" value="{!Addr.isShipTo}" size="1" disabled="{!bEnableShipping}" rendered="{!bRenderShipping}">
+                        <apex:selectOption itemLabel="No" itemValue="No"></apex:selectOption>
+                        <apex:selectOption itemLabel="Yes" itemValue="Yes"></apex:selectOption>
+                    </apex:selectList>
+                </apex:pageblockSectionItem>-->
+                
+                 <!--<apex:pageblockSectionItem >
+                    <apex:outputLabel value="Is Default ShipTo Address?" rendered="{!bRenderDefaultShipTo}"></apex:outputLabel>                              
+                     <apex:selectList id="DefaultShipTo" value="{!Addr.DefaultShipTo}" size="1" disabled="{!bEnableDefShipTo}" rendered="{!bRenderDefaultShipTo}">
+                        <apex:selectOption itemLabel="No" itemValue="No"></apex:selectOption>
+                        <apex:selectOption itemLabel="Yes" itemValue="Yes"></apex:selectOption>
+                    </apex:selectList>
+                </apex:pageblockSectionItem>  -->             
+                               
+               
+                                              
+                
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+   
+</apex:page>

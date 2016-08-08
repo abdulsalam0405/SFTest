@@ -1,0 +1,1018 @@
+<apex:page sidebar="false" controller="LinkAccountController"  tabStyle="ERP_Administration__tab" docType="html-5.0" showHeader="false" >
+
+<apex:pagemessages ></apex:pagemessages>
+    <c:LoadBarComponent />
+    <c:NoRightsComponent rendered="{!AND(if(JSENCODE(ProfileName)=='System Administrator',false,true),NOT(bAdministration))}"></c:NoRightsComponent>
+    <style type="text/css">
+        .bPageBlock {
+            border-top: 4px solid #63a4c5 !important;
+        }
+        
+        .pbSubheader {
+            background-color: #63a4c5 !important;
+        }
+        .pageTitleIcon
+        {
+            background-image : none !important;
+            width :35px !important;
+            height:35px !important;
+        }
+        .tblEntity 
+        {
+            width: 400px;
+            margin:0 auto;
+            border-collaps:collaps;
+        }
+        .bPageBlock
+        {
+            font-size: 12px; !important;
+        } 
+        .activeTab 
+        {
+            background-color: #236FBD; 
+            color:white;
+            background-image:none;
+            border-top-left-radius:5px;
+            border-top-right-radius:5px
+        }
+        .inactiveTab 
+        {
+            background-color: lightgrey; 
+            color:black; 
+            background-image:none;
+            border-top-left-radius:5px;
+            border-top-right-radius:5px
+        }
+        .hdr{font-weight:bold;}
+        .rich-tab-header{font-size: 12px;}
+        .rich-tabhdr-side-cell{border:none;}
+        .rich-tabpanel-content{font-size: 12px;}
+        .refreshListButton1
+        {
+            background: url(/img/alohaSkin/sync.png) top left no-repeat !important;
+            width: 22px ;
+            height: 23px;
+            vertical-align: middle;
+            background-position: 2px 3px !important;
+        }
+        .ConFailed
+        {
+            color:red;
+            font-size:100%;
+            font-weight:bold;
+        }
+        .ConSuccess
+        {
+            color:green;
+            font-size:100%;
+            font-weight:bold;
+        }
+        .data2Col
+        {
+            padding-left: 0px !important;
+            padding-right: 0px !important;
+        }
+        .error{border: 1px solid #c00 !important;}
+        label.error
+        {
+            border: 0px !important;
+            margin-left:5px !important; 
+            color:red !important;
+        }
+        
+        .labelCol
+        {
+            padding-right: 15px !important;
+        }
+        .NavSelect
+        {
+            vertical-align: top !important;
+            height: 35px important;
+            font-family: Arial,Helvetica,sans-serif;
+            font-size: 11.3px;
+            margin-top: -1px !important;
+        }
+  
+    </style>
+   <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery.min.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery-ui.min.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery.serializeJSON.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/Validation/jquery.validate.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/Validation/jquery.validate.min.js')}" ></script>
+    <!--<link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css"></link>-->
+    <link rel="stylesheet" href="{!URLFOR($Resource.IntegrationResources, '/Jquery/ui/1.10.4/themes/smoothness/jquery-ui.css')}"></link>
+    
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources,'/Script/Lookup.js')}" ></script>
+    
+    <script type="text/javascript">
+        var j$ = jQuery.noConflict();
+        var LinkCustomerList = new Array();
+        var customerId = '';
+        var gCustomerKey ='';
+        var gCustomerValue ='';
+        var gCustomerName = '';
+
+        j$(document).ready(function () 
+        {
+            j$(".pageTitleIcon").attr("src", "{!URLFOR($Resource.IntegrationResources,'/Images/Administration/Link.png')}"); 
+            
+            hideLoading();
+            
+            var MapForm=j$("[id$='frmMap']");
+            MapForm.validate();
+              
+            j$("[id$='SyncIntegration']").rules('add', {required: true});
+            
+            j$("[id$='btnSave']").click(function()
+            {
+                debugger;
+                if(j$(MapForm).valid())
+                    fncSave();
+                
+                return false;
+            });            
+        });
+        
+        function ClearLinkedCustomer(CustomerKey)
+        {
+            if(j$('#'+CustomerKey+'_LinkCustomer').val() != '' && LinkCustomerList.length > 0) 
+            {
+                var ConfirmMessage; 
+                
+                if(CustomerKey == 'All')
+                    ConfirmMessage ='Are you sure? you would like to clear all linking(s).';
+                else
+                    ConfirmMessage ='Are you sure? you would like to clear linking.';
+                    
+                LocalReturnResult = confirm(ConfirmMessage);
+                
+                if(LocalReturnResult) 
+                {
+                    
+                    if(CustomerKey == 'All')
+                    {
+                        j$( "input[name$='_LinkCustomer_lkid']" ).val('');
+                        j$( "input[name$='_LinkCustomer']" ).val('');
+                        j$( "label[name$='_LinkCustomerName']" ).html('');
+                        j$( "input[name$='_Override']" ).removeAttr('checked');                               
+                        LinkCustomerList= new Array();
+                    }
+                    else 
+                    {
+                        for(var i=0; i < LinkCustomerList.length;i++){
+                            if(LinkCustomerList[i].LinkedCustomer == j$('#'+CustomerKey+'_LinkCustomer').val()) {
+                                
+                                j$('#'+CustomerKey+'_LinkCustomer_lkid').val('');
+                                j$('#'+CustomerKey+'_LinkCustomer').val('');
+                                j$("#" + LinkCustomerList[i].AccountKey + "_LinkCustomer").val('');
+                                j$("#" + LinkCustomerList[i].AccountKey + "_Override").removeAttr('checked');
+                                j$("#" + LinkCustomerList[i].AccountKey + "_LinkCustomerName").html('');
+                                LinkCustomerList.splice(i, 1);                  
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }   
+             
+        function fncSave()
+        {
+            if(LinkCustomerList.length == 0) {
+                //alert('Please select ERP Customer(s) to link with Account(s).');
+                fncDisplayMessage('Info','Please select ERP Customer(s) to link with Account(s).');
+                return;
+            }
+            debugger;
+            showLoading();
+            
+            try 
+            {
+                Visualforce.remoting.Manager.invokeAction('{!$RemoteAction.LinkAccountController.SaveLinkCustomer}',LinkCustomerList,
+            
+                function (result, event) 
+                {
+                    if (event.status) 
+                    {
+                        hideLoading();
+                        var msg='';
+                        if(result)
+                        {
+                            //msg='The Account(s) are linked successfully with selected Customer.';                          
+                            fncDisplayMessage('Confirm','The Account(s) are linked successfully with selected Customer.');
+                            LinkCustomerList=new Array();
+                        }
+                        else
+                            fncDisplayMessage('Error',result);
+                           // msg = result;
+                            
+                        /*j$( "#action-message" ).html(msg);
+                        j$( "#dialog-action-message" ).dialog(
+                        { 
+                            modal: true, 
+                            title: 'Link',
+                            position: { my: "center", at: "center", of: window },
+                            buttons: 
+                            { 
+                                Ok: function() 
+                                { 
+                                    j$( this ).dialog( "close" );                                   
+                                }
+                            }
+                        }); 
+                        
+                        j$( "#dialog-action-message" ).on( "dialogclose", function( event, ui ) {fncCancel();} ); */                      
+                        
+                       // fncCancel(); 
+                        fncGetList();                                          
+                    }
+                }, {buffer: false, escape: true, timeout: 120000 });
+            }
+            catch (e) 
+            {
+                //fncShowMessage("Error:" + e.message,'Link');
+                fncDisplayMessage('Error',e.message);
+            }
+            
+        }
+        
+        function fncCancel()
+        {
+            showLoading();
+            
+            j$("[id$=FromAccount]").val('');
+            j$("[id$=ToAccount]").val('');
+            
+            if(j$('#SyncIntegration_lkid').val() !='')
+            {
+                //j$('#SyncIntegration_lkid').val('');
+               // j$('#SyncIntegration').val('');
+                
+                //j$("[id$='MatchingCriteria']").val('');
+                
+                fncToggleSections('Cancel');
+                RefreshMapping(getElementByIdCS('SyncIntegration_lkid').value);
+            }
+            
+            hideLoading();
+            return false;
+        }
+        
+        function fncShowMessage(message,strTitle)
+        {
+            j$( "#message" ).html(message);
+            j$( "#dialog-message" ).dialog({ modal:true,title:strTitle, position: { my: "center", at: "center", of: window }, buttons: { Ok: function() { j$( this ).dialog( "close" );}}});
+        }
+        
+        function CallSearch(e, CustomerKey)
+        {
+            var Key=e.keyCode || e.which;
+            
+            if(Key == 13)
+            {
+                if(j$('#txtSearchCustomer').val().trim().length>0)
+                    fncOpenmatchingList(CustomerKey,'Contains');
+                    
+                else
+                    alert('Enter search text');
+            }
+        }
+        
+        function fncOpenmatchingList(CustomerKey,MatchingCriteriaOpt) 
+        {
+            debugger;
+            
+            customerId = CustomerKey;
+            if(j$("#SyncIntegration_lkid").val() == '')
+            {
+                alert('Kindly select Integration.');
+                return false;
+            }
+            
+            if(j$("[id$='MatchingCriteria']").val() == '')
+            {
+                alert('Kindly select Matching Criteria.');
+                return false;
+            }
+            
+            showLoading();
+            var sIntegrationKey = j$("#SyncIntegration_lkid").val();
+            var sMatchingCriteria = 'AC.CustomerName';
+            
+            var sMatchingCriteriaValue ='';
+            
+            sMatchingCriteriaValue = j$("#" + CustomerKey + "_" + j$("[id$='MatchingCriteria']").val()).html();
+            sMatchingCriteriaValue = j$('<div/>').html(sMatchingCriteriaValue).text();
+           
+            if(j$("[id$='MatchingCriteria']").val() == "CountryCode") 
+            {
+                sMatchingCriteriaValue = sMatchingCriteriaValue.substring(0,3);
+            }
+            
+            if(MatchingCriteriaOpt=='Contains')
+                sMatchingCriteriaValue = j$("#txtSearchCustomer").val().trim();
+            
+            CustomerList(sIntegrationKey,sMatchingCriteria,MatchingCriteriaOpt,sMatchingCriteriaValue);
+            
+            
+            
+        }
+        
+        function fncGetHeaderTableHtml()
+        {
+            var sGridHTML='';
+            sGridHTML +='<colgroup>';
+            sGridHTML +='<col width="25%"/>';
+            sGridHTML +='<col width="20%"/>';
+            sGridHTML +='<col />';
+            sGridHTML +='</colgroup>';
+              
+            sGridHTML +='<tbody>';
+            sGridHTML +='<tr class="headerRow">';
+            sGridHTML +='<td class="hdr" style="border-left: 0px;">Customer Number</td>';
+            sGridHTML +='<td class="hdr">Division</td>';
+            sGridHTML +='<td class="hdr">Customer Name</td>';
+            sGridHTML +='</tr>';
+            sGridHTML +='</tbody>';
+            
+            return sGridHTML;
+        }
+        
+        function fncDataTableHtml()
+        {
+            var sGridHTML='';
+                            
+            sGridHTML +='<colgroup>';
+            sGridHTML +='<col width="25%"/>';
+            sGridHTML +='<col width="20%"/>';
+            sGridHTML +='<col />';
+            sGridHTML +='</colgroup>';
+            sGridHTML +='<tbody>';
+            
+            return sGridHTML;
+        }
+        
+        function fncLoadCustomer(CustomerKey, CustomerValue,CustomerName)
+        {
+           
+            var sIntegrationKey = j$("#SyncIntegration_lkid").val();
+            gCustomerKey =CustomerKey;
+            gCustomerValue =unescape(CustomerValue);
+            gCustomerName = unescape(CustomerName);
+            ExistingLinkcustomer(sIntegrationKey,unescape(CustomerValue));
+           
+        }
+        
+        function mapERPCustomer(result)
+        {
+           
+            var returnResult = true;
+            var LocalReturnResult = true;
+            var bFound = false;
+            var sIntegrationKey = j$("#SyncIntegration_lkid").val();
+            
+            if(LinkCustomerList.length > 0)
+            {
+                for(var i=0; i < LinkCustomerList.length;i++)
+                {
+                    if(LinkCustomerList[i].LinkedCustomer == gCustomerValue) 
+                    {
+                        bFound = true;                                       
+                        break;
+                    }
+                }
+            }
+            
+            if(result != '' || bFound)
+            {
+                j$("#dialog-form").dialog( "close" );               
+            }   
+            else
+            {
+                var iMap={};
+                var index=LinkCustomerList.length;
+                if(LinkCustomerList.length > 0) 
+                {
+                    for(var i=0; i < LinkCustomerList.length;i++)
+                    {
+                        if(LinkCustomerList[i].AccountKey == gCustomerKey) 
+                        {
+                            index=i;        
+                            break;
+                        }
+                    }
+                }
+                
+                iMap["AccountKey"]= gCustomerKey;
+                //iMap["AccountNumber"]= j$("#" + gCustomerKey + "_AccountNumber").html();
+                iMap["LinkedCustomer"]= gCustomerValue;
+                iMap["IntegrationKey"]= sIntegrationKey;
+                
+                j$("#" + gCustomerKey + "_LinkCustomer").val(gCustomerValue);
+                j$("#" + gCustomerKey + "_LinkCustomerName").html(gCustomerName);
+                
+                j$("#dialog-form").dialog( "close" );
+                
+                LinkCustomerList[index]=iMap;
+            }                           
+            hideLoading();
+        }
+        
+        function fncToggleSections(btnName) 
+        {
+            if(btnName == "Go") 
+            {
+                //divFilterSection
+                j$("#divAccountList").show();
+                j$('.btn').each(function() 
+                {
+                    if(this.id== 'btnSave' || this.id== 'btnCancel') 
+                    {
+                        j$("[id$='"+ this.id +"']").show();
+                    }
+                });
+                
+                j$("[id$=btnAutoMatch]").removeAttr("disabled").removeClass("btnDisabled").addClass("btn");
+            }
+            else 
+            {
+                j$("#divAccountList").hide();
+                j$('.btn').each(function() 
+                {
+                    if(this.id== 'btnSave' || this.id== 'btnCancel') 
+                        j$("[id$='"+ this.id +"']").hide();
+                });
+                
+                j$("[id$=btnAutoMatch]").attr("disabled", "disabled").removeClass("btn").addClass("btnDisabled");
+            }
+        }
+        
+        function fncDoPreviousNext()
+        {
+            if(LinkCustomerList.length > 0)
+            {
+                var Result=confirm('Note: The selected ERP Customer(s) linking will be lost. Do you want to proceed?');
+                if(Result)
+                {
+                    LinkCustomerList=new Array();
+                    return true;                    
+                }
+                else
+                    return false;
+            }
+            else
+                return true;
+        }
+        
+        
+        
+        function fncDoPreviousNext1(Action) {
+            var bFlag = false;
+            
+            if(LinkCustomerList.length > 0)
+            {
+                var Result=confirm('Note: The selected ERP Customer(s) linking will be lost. Do you want to proceed?');
+                if(Result)
+                {
+                    LinkCustomerList=new Array();
+                    bFlag = true;                    
+                }
+                else
+                    bFlag = false;
+            }
+            else
+                bFlag = true;
+                
+           if(bFlag)
+           {
+               showLoading();
+               if(Action == 'Next')
+               {
+                   Next();
+               }
+               else {
+                   Previous();
+               }
+           }
+           
+           return false;
+        }
+        
+        function fncGetList() 
+        {
+            
+            if(j$("#SyncIntegration_lkid").val() == '')
+            {
+                fncDisplayMessage('Warning','Kindly select Integration.');
+                return false;
+            }
+            
+            if(j$("[id$='MatchingCriteria']").val() == '')
+            {
+                fncDisplayMessage('Warning','Kindly select Matching Criteria.');
+                return false;
+            }
+            
+            showLoading();
+            RefreshMapping(getElementByIdCS('SyncIntegration_lkid').value);
+            fncToggleSections('Go');
+            LinkCustomerList = new Array();
+        }
+        
+        function fncAutoMatch(Index) 
+        {
+            showLoading();
+            
+            var MapArray = new Array();
+            var FinalArray = new Array();
+            
+            var counter = 0;
+            j$('.Mapping').each(function( index ) 
+            {
+                var Id = j$(this).html().trim().split('_')[0];
+                var sIntegrationKey = j$("#SyncIntegration_lkid").val();
+                //var sMatchingCriteria = 'AC.' + j$("[id$='MatchingCriteria']").val();
+                var sMatchingCriteria = 'AC.CustomerName';
+                var sMatchingCriteriaValue = j$("#" + Id + "_" + j$("[id$='MatchingCriteria']").val()).html();
+                
+                
+                sMatchingCriteriaValue = j$('<div/>').html(sMatchingCriteriaValue).text();
+                
+                var iMap={};
+                iMap["AccountKey"] = Id;
+                iMap["IntegrationKey"] = sIntegrationKey;
+                iMap["MatchingCriteria"] = sMatchingCriteria;
+                iMap["MatchingCriteriaValue"] = sMatchingCriteriaValue;
+                
+                
+                
+                MapArray[MapArray.length]=iMap;
+                counter++;
+                
+                if(counter == 100 || (index == j$('.Mapping').length - 1))
+                {
+                    FinalArray[FinalArray.length]=MapArray;
+                    MapArray = new Array();
+                    counter = 0;
+                }
+            });
+            
+                      
+            var Index= 0;
+            
+            if(FinalArray.length > 0)
+                fncNewAutoMatch(Index,FinalArray);
+            else
+                hideLoading();
+        }
+        
+        function fncNewAutoMatch(mapIndex,MapArray) 
+        {
+          //debugger;
+            try 
+            {
+                console.log(MapArray);
+                Visualforce.remoting.Manager.invokeAction('{!$RemoteAction.LinkAccountController.GetERPCustomer}',MapArray[mapIndex],
+
+                function (result, event) 
+                {
+                    try 
+                    {
+                        if (event.status) 
+                        {
+                            console.log(result);
+                            for(var k= 0;k<result.length;k++)
+                            {
+                                if(result[k].CustomerNumber.trim() != '')
+                                {
+                                    var isFound=false;                              
+                                    
+                                    if(LinkCustomerList.length > 0) 
+                                    {
+                                        for(var i=0; i < LinkCustomerList.length;i++)
+                                        {
+                                            if(LinkCustomerList[i].LinkedCustomer == result[k].CustomerNumber) 
+                                            {
+                                                isFound=true;        
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    
+                                    
+                                    if(!isFound && j$("#" + result[k].AccountId + "_LinkCustomer").val().trim() == '')
+                                    {
+                                        
+                                        var iMap={};
+                                        
+                                        j$("#" + result[k].AccountId + "_LinkCustomer").val(result[k].CustomerNumber);
+                                        j$("#" + result[k].AccountId + "_LinkCustomerName").html(result[k].CustomerName);
+                                    
+                                        iMap["AccountKey"]= result[k].AccountId;
+                                        iMap["AccountNumber"]= '';
+                                        iMap["LinkedCustomer"]= result[k].CustomerNumber;
+                                        iMap["IntegrationKey"]= j$("#SyncIntegration_lkid").val();
+                                        
+                                        LinkCustomerList[LinkCustomerList.length]=iMap;
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                             fncDisplayMessage('Info','Unable to connect to the ERP system. Please check connection.');
+                             hideLoading();
+                             return false;
+                        }
+                        
+                        mapIndex++;
+                        
+                        if(mapIndex < MapArray.length) 
+                        {
+                            fncNewAutoMatch(mapIndex,MapArray);
+                        }
+                        
+                        if(mapIndex == MapArray.length){
+                            currentdate = new Date(); 
+                            datetime = currentdate.getDate() + "/"
+                                            + (currentdate.getMonth()+1)  + "/" 
+                                            + currentdate.getFullYear() + " @ "  
+                                            + currentdate.getHours() + ":"  
+                                            + currentdate.getMinutes() + ":" 
+                                            + currentdate.getSeconds();
+                            hideLoading();
+                        }
+                    } 
+                    catch (e) 
+                    {
+                        // Hide loading bar
+                        hideLoading();
+                       fncDisplayMessage('Error',e.message);
+                    }
+                }, {buffer: false, escape: true, timeout: 120000, maxretries: 2 });
+            }
+            catch (e) 
+            {
+                // Hide loading bar
+                hideLoading();
+                fncDisplayMessage('Error',e.message);
+                //alert("Error:" + e.message);
+            }
+        }
+        
+        function test() {
+            if(fncDoPreviousNext()) {
+               showLoading();
+               return Next();
+            }
+        }
+        
+        function fncAdjustWidth()
+        {
+            if(j$('#AccountList tr').length > 10)
+                j$('#AccountList').css('width','101.5%');
+            else
+                j$('#AccountList').css('width','100%');
+        }
+        
+         //Show Apex Message
+        function fncDisplayMessage(Type,Message)
+        {
+            j$('#imgError').hide();
+            j$('#imgWarning').hide();
+            j$('#imgConfirm').hide(); 
+            j$('#imgInfo').hide();
+        
+            switch(Type)
+            {
+                case "Error":
+                    j$('#imgError').show();
+                    break;
+                case "Warning":
+                    j$('#imgWarning').show();
+                    break;
+                case "Confirm":
+                    j$('#imgConfirm').show();
+                    break;
+                case "Info":
+                    j$('#imgInfo').show();
+                    break;
+            }
+        
+            j$('#msgHeader').show();
+            j$('#messages').html(Message);
+        
+            j$('#msgHeader').fadeIn();
+            j$('#msgHeader').fadeOut(4000,"linear"); 
+        }
+        
+        function popCustomerList(result1,CustomerKey)
+        {
+            debugger;
+           
+            var result = j$.parseJSON(result1);
+            var sHeaderHTML = fncGetHeaderTableHtml();
+            var sGridHTML = fncDataTableHtml();
+            CustomerKey=customerId;                    
+            for(var i=0;i<result.length;i++)
+            {
+                var customerNo =result[i].UniqueKey;
+                var customerName =result[i].CustomerName;
+                                
+                customerNo =escape(customerNo);
+                customerName=escape(customerName);
+                
+                sGridHTML +='<tr >';//class="dataRow"
+                sGridHTML +='<td style="border-left: 0px;"><span><a id="lnkView" class="actionLink" name="lnkView" href="javascript:void(0)" onclick="fncLoadCustomer(\''+CustomerKey+'\',\''+customerNo+'\',\''+customerName+'\')">'+ result[i].UniqueKey +'</a></span></td>';
+                console.log(result[i].CategoryCode );
+                sGridHTML +='<td ><span>'+ result[i].CategoryCode + '</span></td>';
+                sGridHTML +='<td ><span>'+ result[i].CustomerName +'</span></td>';//class="dataCell"
+                sGridHTML +='</tr>';
+            }
+        
+            sGridHTML +='</tbody>';
+            
+            var sInfoHtml='';
+            
+            if(result.length > 0) 
+            {
+                j$("[id='CustomerHeader']").html(sHeaderHTML);
+                j$("[id='CustomerList']").html(sGridHTML);
+            }
+            else 
+            {
+                sInfoHtml='<center>No matching criteria Customer(s) are found.</center><br/>';
+                j$("[id='CustomerHeader']").html('');
+                j$("[id='CustomerList']").html('');
+            }
+            
+            sInfoHtml+='<table width="100%"><colgroup><col width="70%"><col width="30%"></colgroup><tr><td style="float:right"><input type="text" onkeypress="CallSearch(event,\''+CustomerKey+'\');" size="50" id="txtSearchCustomer" name="txtSearchCustomer"></td><td> <input type="button" value="Search" onclick="if(j$(\'#txtSearchCustomer\').val().trim().length>0){fncOpenmatchingList(\''+CustomerKey+'\',\'Contains\');}else{alert(\'Enter search text\');}" id="btnSearchCustomer" name="btnSearchCustomer"></td></tr></table>';
+            
+            j$("[id='dvMatchingInfo']").html(sInfoHtml);
+            
+            // Open a Popup window with the list.
+            j$( "#dialog-form" ).dialog({ height: 500, width: 600, modal:true, position: { my: "center", at: "center", of: window }});
+            
+            hideLoading();
+        }
+        
+    </script>
+    
+    <apex:pageBlock rendered="{!OR(if(JSENCODE(ProfileName)=='System Administrator',true,false),(bAdministration))}" >
+    <apex:sectionHeader title="Link Account"/>
+    <apex:outputLink value="/apex/HomeSetting" style="font-size:11px;text-decoration:none;font-family:Verdana,Arial,serif;color:#015ba7;">&nbsp;&nbsp;&nbsp;&#60;&#60; Back to Home</apex:outputLink>
+    <br/>
+    <br/>
+    
+    <apex:form id="frmMap">
+    <apex:pagemessages id="pagemsg"></apex:pagemessages>
+        <div class="message infoM3" role="alert" id="msgHeader" style="display:none">
+            <table border="0" cellpadding="0" cellspacing="0" class="messageTable" style="padding:0px;margin:0px;">
+                <tbody>
+                    <tr valign="top">
+                        <td>
+                            <div id="imgError" style="display:none"><img alt="error" class="msgIcon" src="/s.gif" title="error" style="background-image:url(/img/msg_icons/error24.png);" /></div>
+                            <div id="imgWarning" style="display:none"><img alt="warning" class="msgIcon" src="/s.gif" title="warning" style="background-image:url(/img/msg_icons/warning24.png);" /></div>
+                            <div id="imgConfirm" style="display:none"><img alt="confirm" class="msgIcon" src="/s.gif" title="confirm" style="background-image:url(/img/msg_icons/confirm24.png);" /></div>
+                            <div id="imgInfo" style="display:none"><img alt="info" class="msgIcon" src="/s.gif" title="info" style="background-image:url(/img/msg_icons/info24.png);" /></div>
+                        </td>
+                        <td class="messageCell"><div id="messages" class="messageText"><span id="idspan"><h4></h4></span>Please select the Integration first.<br/></div></td>
+                    </tr>
+                    <tr><td></td><td></td></tr>
+                </tbody>
+            </table>
+        </div>
+    
+        <apex:pageBlock mode="detail">
+            
+            <apex:actionFunction name="RefreshMapping" reRender="MappingList,pagemsg" action="{!GetUnlinkAccounts}" oncomplete="fncAdjustWidth();hideLoading();"> 
+                <apex:param name="Config" assignTo="{!ConfigId}" value=""/>
+                <apex:param assignTo="{!page}" name="Page" value="1"/>
+                <apex:param assignTo="{!OffsetSize}" name="OffsetSize" value="0"/>
+            </apex:actionFunction>
+            
+            <apex:actionFunction name="doNext" reRender="MappingList" action="{!doNext}" oncomplete="fncAdjustWidth();hideLoading();">
+            </apex:actionFunction>
+      
+            <apex:actionFunction name="doPrevious" reRender="MappingList" action="{!doPrevious}" oncomplete="fncAdjustWidth();hideLoading();">
+            </apex:actionFunction>
+            
+            <!--calling page action function for getting customer list-->
+            <apex:actionFunction name="CustomerList" reRender="pagemsg" action="{!CustomerList}" oncomplete="popCustomerList('{!JSENCODE(strCustomerList)}');hideLoading();"> 
+                <apex:param name="ConfigId" value=""/>
+                <apex:param name="MatchingCriteria" value=""/>
+                <apex:param name="MatchingCriteriaOpt" value=""/>
+                <apex:param name="MatchingCriteriaValue" value=""/>
+            </apex:actionFunction>
+            
+            <!--calling page action function to check existing customer-->
+            <apex:actionFunction name="ExistingLinkcustomer" reRender="pagemsg" action="{!ExistingLinkcustomer}" oncomplete="mapERPCustomer('{!JSENCODE(LinkId)}');hideLoading();"> 
+                <apex:param name="ConfigId" value=""/>
+                <apex:param name="CustomerNo" value=""/>
+            </apex:actionFunction>
+            
+            <div class="pbSubheader brandTertiaryBgr first tertiaryPalette"><h3>Filter Section</h3></div>
+            <div id="divFilterSection">
+                <table style="width:90%">
+                    <cols>
+                        <col />
+                        <col />
+                        <col />
+                        <col />
+                        <col />
+                    </cols>
+                    <tr>
+                        <td class="hdr">
+                            <apex:outputLabel for="SyncIntegration" style="float:right;margin-right:5px">Integration </apex:outputLabel>
+                        </td>
+                        <td class="hdr">
+                            <span>
+                                <input type="hidden" name="SyncIntegration_lkid" id="SyncIntegration_lkid" value="{!DefaulIntegrationID}"/> 
+                                <input type="hidden" name="SyncIntegration_lkold" id="SyncIntegration_lkold" value="null"/>
+                                <input type="hidden" name="SyncIntegration_lktp" id="SyncIntegration_lktp" value="{!ConfigObjectPrefix}"/>
+                                <input type="hidden" name="SyncIntegration_lspf" id="SyncIntegration_lspf" value="0"/>
+                                <input type="hidden" name="SyncIntegration_lspfsub" id="SyncIntegration_lspfsub" value="0"/>
+                                <input type="hidden" name="SyncIntegration_mod" id="SyncIntegration_mod" value="0"   />
+                                <input value="{!DefaulIntegrationName}"  readonly="readonly" style="float:left;width:60%;" type="text" name="SyncIntegration" id="SyncIntegration" maxlength="255" onchange="getElementByIdCS('SyncIntegration_mod').value='1'; "/> <!-- value="{!ConfigId}" -->
+                                <a href="javascript:void(0)" onclick="javascript:openLookup('SyncIntegration','frmMap','{!JSENCODE(ConfigObjectPrefix)}','Name','GUMU_Lite__ERP_System__c','GUMU_Lite__Web_Service_URL__c','','','GUMU_Lite__Inactive__c','true','notequal','','','');" 
+                                id="SyncIntegration_lkwgt" tabindex="2" title="Parent Account Lookup (New Window)" >
+                                    <img src="/s.gif" alt="Select Integration(New Window)" class="lookupIcon" onblur="this.className = 'lookupIcon';" onfocus="this.className = 'lookupIconOn';" onmouseout="this.className = 'lookupIcon';this.className = 'lookupIcon';" onmouseover="this.className = 'lookupIconOn';this.className = 'lookupIconOn';" title="Select Integration(New Window)"/>
+                                </a>                            
+                            </span>
+                            
+                        </td>
+                        <td class="hdr">
+                            <apex:outputLabel for="MatchingCriteria" style="float:right;margin-right:5px"> Link Matching Criteria </apex:outputLabel>
+                        </td>
+                        <td class="hdr">
+                            <apex:selectList id="MatchingCriteria" value="{!Criteria}" size="1" style="float:left;width:60%">
+                                <apex:selectOptions value="{!Items}"/>
+                            </apex:selectList>
+                        </td>
+                        
+                         <td >
+                            <apex:commandButton value=" Get List " onclick="fncGetList();" id="btnGo" reRender="none"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="hdr">
+                            <apex:outputLabel for="FromAccount" style="float:right;margin-right:5px"> From Account Name </apex:outputLabel>
+                        </td>
+                        <td class="hdr">
+                            <apex:inputtext id="FromAccount" style="float:left;width:60%" value="{!FromAccount}"/>
+                        </td>
+                        <td class="hdr">
+                            <apex:outputLabel for="ToAccount" style="float:right;margin-right:5px"> To Account Name </apex:outputLabel>
+                        </td>
+                        <td class="hdr" >
+                            <apex:inputtext id="ToAccount" style="float:left;width:60%" value="{!ToAccount}"/>
+                        </td>
+                        <td>
+                            <apex:commandButton value=" Auto Match " onclick="fncAutoMatch(0); return false;" id="btnAutoMatch"   disabled="true"/>                             
+                        </td>
+                    </tr>
+                    
+                </table>
+                
+            </div>
+            <br/>
+            <div id="divAccountList" style="display:none">
+                <apex:pageBlockSection title="Unlinked Account List" collapsible="false" columns="1" id="MappingList">
+                    <apex:outputPanel >
+                        <div style="width:100%;height:300px;overflow-y:auto;overflow-x:auto; border: 1px solid #eaeaea !important; border-bottom:0px !important;border-left:0px !important;border-top:0px !important;" >
+                          <div  style="display: block;position: relative;">
+                              <table style="width:{!TableWidth}%;border-bottom:0px;table-layout:fixed;" class="list" border="1" cellspacing="0" cellpadding="5">
+                                    <colgroup>
+                                         <apex:repeat value="{!Fields}" var="f"> 
+                                    <col width="{!colWidth}%"/>
+                                         </apex:repeat>
+                                            <col width="20%"/>
+                                            <col width="8%"/>
+                                            <col width="15%"/>
+                                    </colgroup>
+                                <tbody>
+                                    <tr class="headerRow">
+                                        <apex:repeat value="{!Fields}" var="f"> 
+                                            <td><apex:outputtext value="{!f.Label}" /></td>
+                                        </apex:repeat>
+                                            <td class="hdr">ERP Customer</td>
+                                            <td class="hdr"><u><a href="javascript:void(0)" onclick="ClearLinkedCustomer('All')" id="lnkClearAll" class="ClearMap"> Clear All</a></u></td>
+                                            <td class="hdr">ERP Customer Name</td>
+                                    </tr> 
+                                </tbody>
+                        </table>
+                    </div>
+                  <div style=" height:300px;">
+                  
+                   <table style="width:{!TableWidth}%;table-layout:fixed;" id="AccountList" class="list" cellspacing="0" cellpadding="1" border="1" width="300" >
+                            <colgroup>
+                                <apex:repeat value="{!Fields}" var="f"> 
+                                   <col width="{!colWidth}%"/>
+                                </apex:repeat>
+                                    <col width="20%"/>
+                                    <col width="8%"/>
+                                    <col width="15%"/>
+                            </colgroup>
+                                <apex:variable value="{!0}" var="rowNum"/>
+                                    <apex:repeat value="{!Mappings}" var="map" id="MappingList">
+                                        <tr class="dataRow">
+                                            <td style="display:none;"><span id="Row{!rowNum}" class="Mapping" >{!map['Id']}_{!map['Id']}</span></td>
+                                                <apex:repeat value="{!Fields}" var="f"> 
+                                            <td id="{!map['Id']}_{!f.FieldPath}"><apex:outputtext value="{!map[f]}" /></td>
+                                                </apex:repeat>
+                                            <td>
+                                        <input type="hidden" name="{!map['Id']}_LinkCustomer_lkid" id="{!map['Id']}_LinkCustomer_lkid" value="{!map['Id']}"/>
+                                        <input type="hidden" name="{!map['Id']}_LinkCustomer_lkold" id="{!map['Id']}_LinkCustomer_lkold" value="null"/>
+                                        <input type="hidden" name="{!map['Id']}_LinkCustomer_lktp" id="{!map['Id']}_LinkCustomer_lktp" value="{!SalesObjectPrefix}"/>
+                                        <input type="hidden" name="{!map['Id']}_LinkCustomer_lspf" id="{!map['Id']}_LinkCustomer_lspf" value="0"/>
+                                        <input type="hidden" name="{!map['Id']}_LinkCustomer_lspfsub" id="{!map['Id']}_LinkCustomer_lspfsub" value="0"/>
+                                        <input type="hidden" name="{!map['Id']}_LinkCustomer_mod" id="{!map['Id']}_LinkCustomer_mod" value="0"/>
+                                        <input type="text" name="{!map['Id']}_LinkCustomer" id="{!map['Id']}_LinkCustomer" readonly="readonly"  maxlength="255" style="width:75%" onchange="getElementByIdCS('{!map['Id']}_LinkCustomer_lkid').value='';getElementByIdCS('{!map['Id']}_LinkCustomer_mod').value='1';"/>
+                                        <a href="javascript:void(0)" onclick="javascript:fncOpenmatchingList('{!map['Id']}','Like');" 
+                                        id="{!map['Id']}_LinkCustomer_lkwgt" tabindex="2" title="Select Customer(New Window)">
+                                            <img src="/s.gif" alt="Select Salesperson(New Window)" class="lookupIcon" onblur="this.className = 'lookupIcon';" onfocus="this.className = 'lookupIconOn';" onmouseout="this.className = 'lookupIcon';this.className = 'lookupIcon';" onmouseover="this.className = 'lookupIconOn';this.className = 'lookupIconOn';" title="Select ERP Customer(New Window)"/>
+                                        </a>
+                                    </td>
+                                <td>
+                                    <a href="javascript:void(0)" onclick="ClearLinkedCustomer('{!map['Id']}')" id="{!map['Id']}_lnkClear" class="ClearMap"> Clear </a>                                        
+                            </td>
+                                    <td ><label id="{!map['Id']}_LinkCustomerName" name="{!map['Id']}_LinkCustomerName"></label></td> 
+                        </tr>
+                                    <apex:variable var="rowNum" value="{!rowNum + 1}"/>                        
+                                    </apex:repeat>                
+                    </table>
+                 </div>
+                </div>   
+                 
+                <div id="ARInquiry_BottomNav" class="bottomNav" style="border: 1px solid rgb(224, 227, 229); padding: 7px;">
+                    <div class="paginator" >
+                        <span class="left">
+                        <span class="selectorTarget"><apex:outputLabel value=" (Page {!page} of {!totalPages}) | Showing {!startIdx} to {!endIdx} of {!totalRecords} " /></span>
+                        </span>
+                        <span class="prevNextLinks">
+                            <span class="prevNext">
+                                <apex:image id="PrevEnabled" value="/s.gif" styleclass="prev"  rendered="{!hasPrevious}" />
+                                <apex:image id="PrevDisabled" value="/s.gif" styleclass="prevoff" rendered="{!NOT(hasPrevious)}"/>
+                              <!--  <apex:commandLink rendered="{!hasPrevious}" value="Previous" reRender="MappingList" action="{!doPrevious}" onclick="if(fncDoPreviousNext()){showLoading();}else{return false}" oncomplete="fncAdjustWidth();hideLoading();"/>-->
+                                <apex:commandLink rendered="{!hasPrevious}" value="Previous" reRender="None" onclick="if(fncDoPreviousNext()){showLoading(); doPrevious();}"/>
+                                <apex:outputLabel rendered="{!NOT(hasPrevious)}" value="Previous" />
+                            </span>
+                            <span class="prevNext">
+                                <apex:commandLink rendered="{!hasNext}" value="Next" reRender="None" onclick="if(fncDoPreviousNext()){showLoading(); doNext();}"  /> 
+                                <apex:outputLabel rendered="{!NOT(hasNext)}" value="Next" />
+                                <apex:image id="NextEnabled" value="/s.gif" styleclass="next"  rendered="{!hasNext}"/>
+                                <apex:image id="NextDisabled" value="/s.gif" styleclass="nextoff" rendered="{!NOT(hasNext)}"/>
+                            </span>
+                            </span>
+                            <span class="right">
+                                Page Size
+                                <apex:selectList value="{!PAGE_SIZE}" size="1" multiselect="false" onchange="fncGetList();" styleClass="NavSelect">
+                                    <apex:selectOption itemLabel="5" itemValue="5" />
+                                    <apex:selectOption itemLabel="10" itemValue="10"/>
+                                    <apex:selectOption itemLabel="15" itemValue="15"/>
+                                    <!--<apex:selectOption itemLabel="100" itemValue="100"/>-->
+                                    <!--<apex:selectOption itemLabel="200" itemValue="200"/>-->
+                                </apex:selectList> 
+                            </span>
+                        </div>
+                        <div class="clearingBox"></div>
+                    </div>
+                  </apex:outputPanel>
+                </apex:pageBlockSection>
+            </div>
+            <div id="divButtonPanel" style="display:none">
+                <apex:pageBlockButtons >
+                    <input type="Submit" id="btnSave" value=" Link " class="btn" style="display:none"/>
+                    <input type="button" id="btnCancel" value=" Cancel " class="btn" onclick="fncCancel();" style="display:none"/>
+                </apex:pageBlockButtons>
+            </div>
+        </apex:pageBlock>
+    </apex:form>
+    
+    <div id="dialog-form" title="ERP Customer" style="display:none">
+        <div style="border-style: solid;border-width: 1px;border-color: #e0e3e5;" >
+            <div style="padding:2px" id="dvMatchingInfo"/>
+            <div>
+                <table id="CustomerHeader" border="1" cellpadding="0" cellspacing="0" class="list" style="width:100%;border: 0px solid !important; border-collapse: collapse;background-color: #F2F3F3;"></table>
+            </div>
+            <div style="height: 360px;overflow-y:auto">
+                <table id="CustomerList" border="1" cellspacing="0" cellpadding="0" class="list" style="width:100%;border: 0px solid !important;border-collapse: collapse;"></table>
+            </div>          
+        </div>      
+    </div>
+    
+    <div id="dialog-message" title="Message" style="display:none">
+        <p>
+            <span class="ui-icon ui-icon-circle-check" style="float:left; margin:0 7px 50px 0;"></span>
+            <span id="message"></span>
+        </p>  
+    </div>
+    
+    <div id="dialog-action-message" title="Message" style="display:none">
+        <p>
+            <span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 50px 0;"></span>
+            <span id="action-message"></span>
+        </p>  
+    </div>
+    </apex:pageBlock>   
+</apex:page>

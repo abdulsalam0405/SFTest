@@ -1,0 +1,12 @@
+<apex:component >
+  <apex:attribute name="rendered" description="Decides component to be rendered or not." type="Boolean" required="true"/>
+    <apex:pageBlock rendered="{!rendered}">
+        
+        <br/> 
+        <div id="divInactiveMessage" style="border: 1px solid;border-color: gray;border-radius: 5px;height: 40px;">
+            <center style="font-size: 18px;margin-top: 8px;color: gray;margin-bottom: 8px;">
+                You do not have permission to access this page. Contact your system administrator to request access.
+            </center>
+        </div>
+    </apex:pageBlock>
+</apex:component>

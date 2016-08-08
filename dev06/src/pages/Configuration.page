@@ -1,0 +1,624 @@
+<apex:page sidebar="false" standardController="ERP_Config__c" tabStyle="ERP_Administration__tab" extensions="ConfigurationController" docType="html-5.0" id="configPage" showHeader="false" >
+<apex:pagemessages ></apex:pagemessages>
+    <c:LoadBarComponent />
+    <c:NoRightsComponent rendered="{!AND(if(JSENCODE(ProfileName)=='System Administrator',false,true),NOT(bAdministration))}"></c:NoRightsComponent>
+    <style type="text/css">
+        .bPageBlock {
+            border-top: 4px solid #63a4c5 !important;
+        }
+        
+        .pbSubheader {
+            background-color: #63a4c5 !important;
+        }
+        .pageTitleIcon
+        {
+            background-image : none !important;
+            width :35px !important;
+            height:35px !important;
+        }
+        .tblEntity 
+        {
+            width: 400px;
+            margin:0 auto;
+            border-collaps:collaps;
+        }
+        .bPageTitle
+        {
+            padding: 5px 0px !important;
+            margin-bottom: 5px !important;
+        }
+        .activeTab 
+        {
+            background-color: #236FBD; 
+            color:white;
+            background-image:none;
+            border-top-left-radius:5px;
+            border-top-right-radius:5px
+        }
+        .inactiveTab 
+        {
+            background-color: lightgrey; 
+            color:black; 
+            background-image:none;
+            border-top-left-radius:5px;
+            border-top-right-radius:5px
+        }
+        .hdr{font-weight:bold;}
+        .rich-tab-header{font-size: 12px;}
+        .rich-tabhdr-side-cell{border:none;}
+        .rich-tabpanel-content{font-size: 12px;}
+        .refreshListButton1
+        {
+            background: url(/img/alohaSkin/sync.png) top left no-repeat !important;
+            width: 22px ;
+            height: 23px;
+            vertical-align: middle;
+            background-position: 2px 3px !important;
+        }
+        .ConFailed
+        {
+            color:red;
+            font-size:100%;
+            font-weight:bold;
+        }
+        .ConSuccess
+        {
+            color:green;
+            font-size:100%;
+            font-weight:bold;
+        }
+        .data2Col
+        {
+            padding-left: 0px !important;
+            padding-right: 0px !important;
+        }
+        .error{border: 1px solid #c00 !important;}
+        label.error
+        {
+            border: 0px !important;
+            margin-left:5px !important; 
+            color:red !important;
+        }
+        
+        .labelCol
+        {
+            padding-right: 15px !important;
+            vertical-align: middle !important;
+        }
+        
+        .ui-widget 
+        {
+            font-family: Verdana,Arial,sans-serif !important;
+            font-size: 1.1em !important;
+        }
+        .ui-widget-header 
+        {
+            border: 1px solid #aaaaaa !important;
+            background: #cccccc !important;
+            color: #222222 !important;
+            font-weight: bold !important;
+        }
+        .ui-widget-content 
+        {
+            border: 1px solid #aaaaaa !important;
+            background: #ffffff !important;
+            color: #222222 !important;
+        }
+        .ui-progressbar 
+        {
+            height:20px !important;
+            padding-right:0px !important;
+            margin-right:0px !important;
+        }
+        .ui-progressbar-value
+        {
+            height:20px !important;
+            background: #63a4c5 !important;
+        }
+        .progress-label 
+        {
+            margin-left: 10px;
+            text-align: center;
+            top: 4px;
+            font-size:12px;
+            font-weight: bold;
+            text-shadow: 1px 1px 0 #fff;
+          }
+        
+    </style>
+    
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery.min.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery-ui.min.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery.serializeJSON.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/Validation/jquery.validate.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/Validation/jquery.validate.min.js')}" ></script>
+    <!--<link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css"></link>-->
+    <link rel="stylesheet" href="{!URLFOR($Resource.IntegrationResources, '/Jquery/ui/1.10.4/themes/smoothness/jquery-ui.css')}"></link> 
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources,'/Script/Lookup.js')}" ></script>
+    
+    <apex:includeScript value="{!$Resource.jquery_1_7_2}"/>
+   
+
+    <script type="text/javascript">
+        var j$ = jQuery.noConflict();
+        var pageMode = '{!JSENCODE(pageMode)}';
+        debugger;
+        function fncEditCurrentRecord()
+        {
+            j$('input[id$="Web_Service_URL__c"]').attr('disabled', false);
+            j$('input[id$="Name"]').attr('disabled', false);
+            j$('input[id$="Default__c"]').attr('disabled', false);
+            j$('input[id$="Inactive__c"]').attr('disabled', false);
+            j$("[id$='ERP_System__c']").attr('disabled', false);
+            j$("[id$='Synchronization__c']").attr('disabled', false);
+            
+            $( ".conparam" ).each(function() {
+              $( this ).attr('disabled', false);
+            }); 
+             
+         }
+         function newDoc() 
+         {
+             window.top.location.href ='/apex/Configurationlist';
+         }
+           
+        var ConReqParamString = '';
+        var glbConParams = new Array();
+        var SavedIntegrations ;
+        var ERPXMLJson=j$.parseJSON('{!JSENCODE(ERPXMLJson)}');
+        
+        j$(document).ready(function () 
+        {
+            j$.validator.addMethod("cus_url", function(value, element) { 
+                
+                return /^(https):\/\/[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$/i.test(value); 
+            }, "Please enter valid url ( Note: URL must starts with https).");
+
+            //SavedIntegrations = j$.parseJSON('{!JSENCODE(IntegrationNames)}');
+            
+            j$(".pageTitleIcon").attr("src", "{!URLFOR($Resource.IntegrationResources,'/Images/Administration/Configuration.gif')}"); 
+            
+            // Hide loading bar
+            hideLoading();
+            
+            var ERPConfigForm=j$("[id$='frmErpConfig']");
+            
+           j$.extend(j$.validator.messages, {
+                required: "Error: You must enter a value"
+            });
+            
+            ERPConfigForm.validate();
+              
+            j$("[id$='ERP_System__c']").rules('add', {required: true});
+            //j$("[id$='Web_Service_URL__c']").rules('add', {required: true,cus_url: true,url: true});
+            j$("[id$='Web_Service_URL__c']").rules('add', {required: true,url: true});
+            j$("[id$='Name']").rules('add', {required: true});
+            j$("[id$='Synchronization__c']").rules('add', {required: true});
+
+            j$("[id$='btnTestConnection']").click(function()
+            {
+                if(j$(ERPConfigForm).valid())
+                    fncTestConnection(false);
+                
+                return false;
+            });
+            
+            j$("[id$='btnCreateEntityNMapping']").click(function()
+            {
+                //showLoading();
+                if(j$(ERPConfigForm).valid())
+                {
+                   CreatePostInstallData(1);
+                 }  
+                 //hideLoading();                
+                return false;
+            });
+            
+          
+            j$("[id$='btnSave']").click(function()
+            {
+                if(j$(ERPConfigForm).valid())
+                    fncSaveConfig();
+              
+                return false;
+            });
+          
+            // Change the values of years in datepicker
+
+            j$('#calYearPicker').html('');
+          
+            for(i=1900;i<=2025;i++)
+            {
+                j$('#calYearPicker').append('<option value="'+i+'">'+i+'</option>');
+            }
+            
+            //j$('#parameters').html(j$('<div/>').html('{!JSENCODE(ERPConfigDetail)}'));
+            j$("[id$='ParamSection1']").children('div').html('{!JSENCODE(ERPConfigDetail)}');
+            
+            j$("[id$='ERP_System__c']").change(function() 
+            {
+                debugger;
+                var selectedErp= j$(this).val();
+                
+                if(selectedErp==="")
+                {
+                    j$("[id$='Web_Service_URL__c']").val('');
+                    j$("[id$='Name']").val('');
+                    j$("[id$='Inactive__c']").prop('checked', false);
+                    j$("[id$='Default__c']").prop('checked', false);
+                    j$("[id$='ParamSection1']").children('div').html('');
+                }
+                else
+                {
+                    RequiredComapnyParams(selectedErp);
+                }
+              
+                //Display save and test connection button
+                disableButtons(false);
+            });
+            
+            
+            if(pageMode == 'Edit')
+            {
+                debugger;
+                j$('input[id$="Web_Service_URL__c"]').attr('disabled',false);
+                j$('input[id$="Name"]').attr('disabled',false);
+                j$('input[id$="Default__c"]').attr('disabled',false);
+                j$('input[id$="Inactive__c"]').attr('disabled',false);
+                
+                $( ".conparam" ).each(function() {
+                  $( this ).attr('disabled', false);
+                });
+            }
+            else if(pageMode == 'View')
+            {
+                j$('input[id$="Web_Service_URL__c"]').attr('disabled','true');
+                j$('input[id$="Name"]').attr('disabled','true');
+                j$('input[id$="Default__c"]').attr('disabled','true');
+                j$('input[id$="Inactive__c"]').attr('disabled','true');
+                
+                $( ".conparam" ).each(function() {
+                  $( this ).attr('disabled', 'true');
+                });
+                
+              
+                
+            }         
+        });
+        
+        function fncShowMessage(message,strTitle)
+        {
+            j$( "#message" ).html(message);
+            j$( "#dialog-message" ).dialog({ modal:true,title:strTitle, position: { my: "center", at: "center", of: window }, buttons: { Ok: function() { j$( this ).dialog( "close" );}}});
+        }
+        
+        function fncShowActionMessage(message,Action)
+        {
+            j$( "#action-message" ).html(message);
+            j$( "#dialog-action-message" ).dialog(
+            { 
+                modal:true, 
+                position: { my: "center", at: "center", of: window },
+                buttons: 
+                { 
+                    Ok: function() 
+                    { 
+                        j$( this ).dialog( "close" );
+                    }
+                }
+            });
+        }
+        
+        function disableButtons(bValue) 
+        {
+            if (!bValue) 
+            {
+                j$("[name$='btnTestConnection']").show();
+                j$("[name$='btnSave']").show();
+            }
+            else 
+            {
+                j$("[name$='btnTestConnection']").hide();
+                j$("[name$='btnSave']").hide();
+            }
+        }
+      
+        function fncGetConnectionParams() 
+        {
+            var ConParams = new Array();
+      
+            j$('.conparam').each(function (i, obj) 
+            {
+                var IdBlocks = j$(this).attr("id").split(":");
+                var key = IdBlocks[IdBlocks.length - 1];
+                var value = j$(this).val().trim();
+
+                if (value == null || value == undefined) 
+                    value = '';
+
+                var ConParam = key + '=' + value;
+                ConParams[i] = ConParam;
+            });
+      
+            return ConParams;
+        }
+      
+      
+        function fncShowConnectionResult(result)
+        {
+            if(result==='success')
+            {                
+                fncDisplayMessage('Confirm','Connection Successful');
+            }
+            else if (result==='failure')
+            {
+                fncDisplayMessage('Error','Connection Failed. Please provide correct values');
+            }                      
+        }
+       
+        function fncTestConnection(bSave) 
+        {
+        debugger;
+            // Show loading bar
+            showLoading();
+          
+            var WebServiceURL=j$("[id$='Web_Service_URL__c']").val().trim();
+            var ERPSystem=j$("[id$='ERP_System__c']").val().trim();
+            var ConParams = fncGetConnectionParams();
+            var ConfigId = j$("[id$='ConfigId']").val().trim();
+            var cfg = {};
+            TestConnection(WebServiceURL,JSON.stringify(ConParams),ERPSystem,'TestConnection',ConfigId,cfg);
+            
+        }
+      
+        function fncSaveConfig() 
+        {
+            
+            showLoading();
+            var WebServiceURL=j$("[id$='Web_Service_URL__c']").val().trim();
+            var ERPSystem=j$("[id$='ERP_System__c']").val().trim();
+            glbConParams = fncGetConnectionParams();
+             
+            var ConfigId = j$("[id$='ConfigId']").val().trim();
+            var Integration_Name = j$("[id$='Name']").val().trim();
+            var ERP_System_Name = j$("[id$='ERP_System__c']").val().trim();
+            var WCF_Service_URL = j$("[id$='Web_Service_URL__c']").val().trim();
+            var Synchronization= j$("[id$='Synchronization__c']").val().trim();
+            var Inactive= j$("[id$='Inactive__c']").prop('checked');
+            var Default= j$("[id$='Default__c']").prop('checked');
+            var CompanyInfoText = '<PARAMS>';
+            var CompanyCode='';
+           
+            for (var i = 0; i < glbConParams .length; i++) 
+            {
+                var ParamArray = glbConParams [i].split('=');
+                
+                if(ParamArray[0]=='CompanyCode')
+                    CompanyCode=ParamArray[1];
+                    
+                if(ParamArray[0]=='poolAlias')
+                    CompanyCode=ParamArray[1];
+                    
+                CompanyInfoText += '<PARAM NAME="' + ParamArray[0] + '" VALUE="' + ParamArray[1] + '"/>';
+            }
+          
+            CompanyInfoText += '</PARAMS>';
+            
+            var cfg = {};
+
+            cfg["Name"]=Integration_Name;
+            cfg["WebServiceURL"]=WCF_Service_URL;
+            cfg["IntegrationInformation"]=CompanyInfoText;
+            cfg["Inactive"]=Inactive;
+            cfg["Default"]=Default;
+            cfg["ERPSystem"]=ERP_System_Name;
+            cfg["CompanyCode"]=CompanyCode;
+            cfg["Synchronization"]=Synchronization;
+            
+            TestConnection(WebServiceURL,JSON.stringify(glbConParams),ERPSystem,'Test&Save',ConfigId,JSON.stringify(cfg));             
+        }
+      
+        function fncERPConfigCancel() 
+        {
+            j$("[name$='btnEdit']").hide();
+          
+            j$("[id$='ConfigId']").val('');
+            j$("[id$='ParamSection1']").children('div').html('');
+            j$("[id$='ERP_System__c']").val('').attr('disabled', false);
+            j$("[id$='Synchronization__c']").val('').attr('disabled', false);
+            j$("[id$='Web_Service_URL__c']").val('').attr('disabled', false);
+            j$("[id$='Name']").val('').attr('disabled', false);
+             j$("[id$='Default__c']").prop("checked",false).attr('disabled', false);
+            j$("[id$='Inactive__c']").prop("checked",false).attr('disabled', false);
+            
+            j$("[id$='Web_Service_URL__c']").removeClass('error');
+            j$("[id$='Web_Service_URL__c']").next('label').hide();
+            
+            j$("[id$='Name']").removeClass('error');
+            j$("[id$='Name']").next('label').hide();
+          
+            disableButtons(true);
+        }
+        
+        //Show Apex Message
+        function fncDisplayMessage(Type,Message)
+        {
+            j$('#imgError').hide();
+            j$('#imgWarning').hide();
+            j$('#imgConfirm').hide(); 
+            j$('#imgInfo').hide();
+            
+            switch(Type)
+            {
+                case "Error":
+                    j$('#imgError').show();
+                    break;
+                case "Warning":
+                    j$('#imgWarning').show();
+                    break;
+                case "Confirm":
+                    j$('#imgConfirm').show();
+                    break;
+                case "Info":
+                    j$('#imgInfo').show();
+                    break;
+            }
+                           
+            j$('#msgHeader').show();
+            j$('#messages').html(Message);
+                        
+            j$('#msgHeader').fadeIn();
+            j$('#msgHeader').fadeOut(4000,"linear"); 
+        }
+        
+        function reRenderConDetails(condetail)
+        {
+            debugger;
+            
+            //j$('#parameters').html(j$('<div/>').html(condetail));
+            j$("[id$='ParamSection1']").children('div').html(condetail);
+        }
+                
+    </script>
+    <apex:pageBlock rendered="{!OR(if(JSENCODE(ProfileName)=='System Administrator',true,false),(bAdministration))}" >
+    <apex:sectionHeader title="ERP Configuration"/>
+     <apex:outputLink value="/apex/HomeSetting" style="font-size:11px;text-decoration:none;font-family:Verdana,Arial,serif;color:#015ba7;">&nbsp;&nbsp;&nbsp;&#60;&#60; Back to Home</apex:outputLink>
+    <apex:outputLink value="/apex/Configurationlist" style="font-size:11px;text-decoration:none;font-family:Verdana,Arial,serif;color:#015ba7;" target="_top">&nbsp;&#60;&#60; Back to Configuration list</apex:outputLink>
+    <br/>
+    <br/>
+    <br/>
+    
+    <apex:form html-novalidate="true" id="frmErpConfig" >
+    <apex:pageMessages id="logmsg"></apex:pageMessages>
+    
+    <apex:actionFunction name="RequiredComapnyParams" action="{!RequiredComapnyParams}"  oncomplete="reRenderConDetails('{!JSENCODE(ERPConfigDetail)}');" reRender="logmsg" immediate="true">  
+          <apex:param name="ERPSystem" value="" assignTo="{!ERPSystem}"/>         
+     </apex:actionFunction>
+    
+    <apex:actionFunction name="TestConnection" action="{!TestConnection}"  oncomplete="hideLoading();" reRender="logmsg" >  
+          <apex:param name="WebServiceURL" value="" assignTo="{!WebServiceURL}"/>
+          <apex:param name="ConParams" value=""  assignTo="{!ConParams}" />
+          <apex:param name="ERPSystem" value="" assignTo="{!ERPSystemName}"/>
+          <apex:param name="PageAction" value="" assignTo="{!PageAction}"/>
+          <apex:param name="ConfigurationId" value="" assignTo="{!ConfigurationId}"/>
+          <apex:param name="ConfigurationInfo" value="" assignTo="{!ConfigurationInfo}"/>
+     </apex:actionFunction>
+     
+     <apex:actionFunction name="CreatePostInstallData" action="{!CreatePostInstallData}"  oncomplete="CreatePostInstallData2(2);" reRender="logmsg" >  
+          <apex:param name="ImportDatastep" value="" assignTo="{!ImportDatastep}"/> 
+     </apex:actionFunction>
+      <apex:actionFunction name="CreatePostInstallData2" action="{!CreatePostInstallData}"  oncomplete="CreatePostInstallData3(3);"   reRender="logmsg" >  
+          <apex:param name="ImportDatastep" value="" assignTo="{!ImportDatastep}"/> 
+     </apex:actionFunction> 
+       <apex:actionFunction name="CreatePostInstallData3" action="{!CreatePostInstallData}"  oncomplete="CreatePostInstallData4(4);" reRender="logmsg" >  
+          <apex:param name="ImportDatastep" value="" assignTo="{!ImportDatastep}"/> 
+     </apex:actionFunction>
+     <apex:actionFunction name="CreatePostInstallData4" action="{!CreatePostInstallData}"  oncomplete="CreatePostInstallData5(5);" reRender="logmsg" >  
+          <apex:param name="ImportDatastep" value="" assignTo="{!ImportDatastep}"/> 
+     </apex:actionFunction>
+     <apex:actionFunction name="CreatePostInstallData5" action="{!CreatePostInstallData}"  oncomplete="CreatePostInstallData6(6);" reRender="logmsg" >  
+          <apex:param name="ImportDatastep" value="" assignTo="{!ImportDatastep}"/> 
+     </apex:actionFunction>
+     <apex:actionFunction name="CreatePostInstallData6" action="{!CreatePostInstallData}"  oncomplete="CreatePostInstallData7(7);" reRender="logmsg" >  
+          <apex:param name="ImportDatastep" value="" assignTo="{!ImportDatastep}"/> 
+     </apex:actionFunction>
+     <apex:actionFunction name="CreatePostInstallData7" action="{!CreatePostInstallData}"  oncomplete="CreatePostInstallData8(8);" reRender="logmsg" >  
+          <apex:param name="ImportDatastep" value="" assignTo="{!ImportDatastep}"/> 
+     </apex:actionFunction>
+     <apex:actionFunction name="CreatePostInstallData8" action="{!CreatePostInstallData}"  oncomplete="CreatePostInstallData9(9);" reRender="logmsg" >  
+          <apex:param name="ImportDatastep" value="" assignTo="{!ImportDatastep}"/> 
+     </apex:actionFunction>
+     <apex:actionFunction name="CreatePostInstallData9" action="{!CreatePostInstallData}"  oncomplete="CreatePostInstallData10(10);" reRender="logmsg" >  
+          <apex:param name="ImportDatastep" value="" assignTo="{!ImportDatastep}"/> 
+     </apex:actionFunction>
+     <apex:actionFunction name="CreatePostInstallData10" action="{!CreatePostInstallData}"  oncomplete="CreatePostInstallData11(11)" reRender="logmsg" >  
+          <apex:param name="ImportDatastep" value="" assignTo="{!ImportDatastep}"/> 
+     </apex:actionFunction>
+     <apex:actionFunction name="CreatePostInstallData11" action="{!CreatePostInstallData}"  oncomplete="CreatePostInstallData12(12)" reRender="logmsg" >  
+          <apex:param name="ImportDatastep" value="" assignTo="{!ImportDatastep}"/> 
+     </apex:actionFunction>
+     <apex:actionFunction name="CreatePostInstallData12" action="{!CreatePostInstallData}"  oncomplete="CreatePostInstallData13(13)" reRender="logmsg" >  
+          <apex:param name="ImportDatastep" value="" assignTo="{!ImportDatastep}"/> 
+     </apex:actionFunction>
+     <apex:actionFunction name="CreatePostInstallData13" action="{!CreatePostInstallData}"  oncomplete="CreatePostInstallData14(14)" reRender="logmsg" >  
+          <apex:param name="ImportDatastep" value="" assignTo="{!ImportDatastep}"/> 
+     </apex:actionFunction>
+     <apex:actionFunction name="CreatePostInstallData14" action="{!CreatePostInstallData}"  oncomplete="CreatePostInstallData15(15)" reRender="logmsg" >  
+          <apex:param name="ImportDatastep" value="" assignTo="{!ImportDatastep}"/> 
+     </apex:actionFunction>
+     <apex:actionFunction name="CreatePostInstallData15" action="{!CreatePostInstallData}"  oncomplete="hideLoading();" reRender="logmsg" >  
+          <apex:param name="ImportDatastep" value="" assignTo="{!ImportDatastep}"/> 
+     </apex:actionFunction>
+       
+     <div class="message infoM3" role="alert" id="msgHeader" style="display:none">
+        <table border="0" cellpadding="0" cellspacing="0" class="messageTable" style="padding:0px;margin:0px;">
+            <tbody>
+            <tr valign="top">
+                <td>
+                    <div id="imgError" style="display:none"><img alt="error" class="msgIcon" src="/s.gif" title="error" style="background-image:url(/img/msg_icons/error24.png);" /></div>
+                    <div id="imgWarning" style="display:none"><img alt="warning" class="msgIcon" src="/s.gif" title="warning" style="background-image:url(/img/msg_icons/warning24.png);" /></div>
+                    <div id="imgConfirm" style="display:none"><img alt="confirm" class="msgIcon" src="/s.gif" title="confirm" style="background-image:url(/img/msg_icons/confirm24.png);" /></div>
+                    <div id="imgInfo" style="display:none"><img alt="info" class="msgIcon" src="/s.gif" title="info" style="background-image:url(/img/msg_icons/info24.png);" /></div>
+                </td>
+                <td class="messageCell"><div id="messages" class="messageText"><span id="idspan"><h4></h4></span>Please select the Integration first.<br/></div></td>
+            </tr>
+            <tr><td></td><td></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!--  -->
+        <div id="divConnectionSetting">
+            <apex:pageBlock >
+                <apex:pageBlockSection title="Integration Settings" collapsible="false" columns="1" id="Section1">
+                    <apex:inputHidden value="{!oConfiguration.Id}" id="ConfigId"/>
+                    <apex:selectList size="1" multiselect="false" value="{!oConfiguration.ERP_System__c}" id="ERP_System__c" disabled="{!shouldDisable}">
+                        <apex:selectOptions value="{!ERPOptions}" ></apex:selectOptions>
+                    </apex:selectList>
+                   
+                   <apex:inputField value="{!oConfiguration.Web_Service_URL__c}" id="Web_Service_URL__c" style="width: 400px"   />
+                   <apex:inputField value="{!oConfiguration.Name}" id="Name" style="width: 400px" />                    
+                    <apex:selectList multiselect="false" size="1" value="{!oConfiguration.Synchronization__c}" id="Synchronization__c" disabled="{!shouldDisable}" required="true" >
+                        <apex:selectOption itemValue="" itemLabel="None"></apex:selectOption>
+                        <apex:selectOption itemValue="ERP to Salesforce" itemLabel="ERP to Salesforce"></apex:selectOption>
+                        <apex:selectOption itemValue="Salesforce to ERP" itemLabel="Salesforce to ERP"></apex:selectOption>
+                        <apex:selectOption itemValue="Both" itemLabel="Both"></apex:selectOption>
+                    </apex:selectList>
+                    <apex:inputField value="{!oConfiguration.Default__c}" id="Default__c" label="Default"   /> <!--rendered="{!isSelected}"-->
+                    <apex:inputField value="{!oConfiguration.Inactive__c}" id="Inactive__c" label="Inactive" />
+                </apex:pageBlockSection>
+                
+                <!-- -->
+                <apex:pageBlockSection title="Company Details" collapsible="false" columns="1" id="CompDetails">
+                    <apex:outputPanel layout="block" id="ParamSection1">          
+                        <div id="parameters" ></div>
+                    </apex:outputPanel>       
+                </apex:pageBlockSection>  
+                <center><label id="lblConnectionStatus"/></center>
+                <!-- -->                    
+                <apex:pageBlockButtons location="both" id="pgButtons">
+                    <apex:commandButton value="Test Connection" id="btnTestConnection" rendered="{!bTestConnection}"/>
+                    <apex:commandButton value="Save" id="btnSave" rendered="{!bSave}"/>
+                    <apex:commandButton value="Edit" id="btnEdit" rendered="{!bEdit}" reRender="configPage"  action="{!enableButtons}"/>
+                    <apex:commandButton value="Cancel" action="{!doCancel}" id="btnCancel" immediate="true" onclick="newDoc()"  html-formnovalidate="formnovalidate" />                                       
+                    <apex:commandButton value="Create Default Entity and Mapping" id="btnCreateEntityNMapping" onclick="showLoading();"  rendered="{!bEdit}"  />        
+                    
+                </apex:pageBlockButtons>
+            </apex:pageBlock>
+        </div>
+    </apex:form>
+    <div id="dialog-message" title="Message" style="display:none">
+        <p>
+            <span class="ui-icon ui-icon-circle-check" style="float:left; margin:0 7px 50px 0;"></span>
+            <span id="message"></span>
+        </p>  
+    </div>
+    
+    <div id="dialog-action-message" title="Message" style="display:none">
+        <p>
+            <span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 50px 0;"></span>
+            <span id="action-message"></span>
+        </p>  
+    </div>    
+    </apex:pageBlock>
+</apex:page>

@@ -1,0 +1,123 @@
+<apex:page sidebar="false"  controller="AdministrationController">
+<apex:pagemessages ></apex:pagemessages>
+   <c:NoRightsComponent rendered="{!AND(if(JSENCODE(ProfileName)=='System Administrator',false,true),NOT(bAdministration))}"></c:NoRightsComponent>
+    <style>
+        .menuTable
+        {
+            padding: 10px;
+            //border:1px solid; 
+            border-radius:5px;          
+        }       
+        .menuIcon
+        {
+            float: right;
+            padding-right: 10px;
+        }
+        .menuText
+        {
+            padding-left: 10px;
+        }
+        .pageTitleIcon
+        {
+            background-image : none !important;
+            width :35px !important;
+            height:35px !important;
+        }
+    </style>
+    
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery.min.js')}" ></script>
+    
+    <script type="text/javascript">
+        var j$ = jQuery.noConflict();
+        
+        j$(document).ready(function () 
+        {
+            j$(".pageTitleIcon").attr("src", "{!URLFOR($Resource.IntegrationResources,'/Images/Administration/Administration.png')}");            
+        });
+        
+    </script>
+    
+    
+    <apex:pageBlock rendered="{!OR(if(ProfileName=='System Administrator',true,false),(bAdministration))}" >
+    <apex:sectionHeader title="ERP Administration" />
+    <apex:pageblock >
+    
+    <table width="100%" class="menuTable">
+        <cols>
+            <col width="10%"/>
+            <col width="40%"/>
+            <col width="10%"/>
+            <col width="40%"/>
+        </cols>    
+        <tr>
+            <td class="menuIcon">
+                <apex:outputLink value="/apex/{!ConfigarationPage}">
+                    <apex:image url="{!URLFOR($Resource.IntegrationResources,'/Images/Administration/Configuration.gif')}" width="50" height="50"/>
+                </apex:outputLink>
+            </td>
+            <td class="menuText">
+                <apex:outputLink value="/apex/{!ConfigarationPage}">
+                    <b>Configuration</b>
+                </apex:outputLink><br/> 
+                Specify ERP credentials and other connection settings.                
+            </td>
+            <td class="menuIcon">
+                <apex:outputLink value="/apex/{!SecurityMatrixPage}">
+                    <apex:image url="{!URLFOR($Resource.IntegrationResources,'Images/Administration/Security_Matrix.gif')}" width="50" height="50"/>
+                </apex:outputLink>
+            </td>
+            <td class="menuText">
+                <apex:outputLink value="/apex/{!SecurityMatrixPage}">
+                    <b>Security Matrix</b>
+                </apex:outputLink><br/>
+                Assign integration security rights to the users in Salesforce.
+            </td>
+        </tr>
+        <tr>
+            <td class="menuIcon">
+                <apex:outputLink value="/apex/{!LinkAccountPage}">
+                    <apex:image url="{!URLFOR($Resource.IntegrationResources,'Images/Administration/Link.png')}" width="50" height="50"/>
+                </apex:outputLink>
+            </td>
+            <td class="menuText">
+                <apex:outputLink value="/apex/{!LinkAccountPage}">
+                    <b>Link Account</b>
+                </apex:outputLink><br/>
+                Link ERP customers with Salesforce accounts.   
+            </td>
+            <td class="menuIcon">
+               <apex:outputLink value="/apex/{!UnlinkAccountPage}">
+                    <apex:image url="{!URLFOR($Resource.IntegrationResources,'Images/Administration/Unlink.png')}" width="50" height="50"/>
+                </apex:outputLink> 
+            </td>
+            <td class="menuText">
+               <apex:outputLink value="/apex/{!UnlinkAccountPage}">
+                    <b>Unlink Account</b>
+                </apex:outputLink><br/>
+                Unlink Salesforce accounts from ERP customers.   
+            </td>
+        </tr>
+         <tr>
+            <td class="menuIcon">
+                <apex:outputLink value="/apex/{!ImportDataPage}">
+                    <apex:image url="{!URLFOR($Resource.IntegrationResources,'Images/Administration/Sync_Dropdowns.gif')}" width="50" height="50"/>
+                </apex:outputLink>
+            </td>
+            <td class="menuText">
+                <apex:outputLink value="/apex/{!ImportDataPage}">
+                    <b>Import Data</b>
+                </apex:outputLink><br/> 
+                Import ERP data in Salesforce.
+            </td>
+            <td class="menuIcon">
+            
+            </td>
+            <td class="menuText">
+               
+            </td>
+        </tr>
+        
+    </table>
+    </apex:pageblock>
+    </apex:pageBlock>
+</apex:page>

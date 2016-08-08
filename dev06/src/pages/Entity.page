@@ -1,0 +1,113 @@
+<apex:page sidebar="false"   standardController="Entity__c" extensions="EntityController" tabStyle="Entity_Sync_Mapping__tab"   showHeader="false"> 
+    <c:LoadBarComponent />
+    <style>
+        .bPageBlock {
+            border-top: 4px solid #63a4c5 !important;
+        }
+        
+        .pbSubheader {
+            background-color: #63a4c5 !important;
+        }
+        .pageTitleIcon
+       {
+          background-image: url(/img/icon/orderBell32.png) !important;
+        }
+         
+    </style>
+     <apex:stylesheet value="{!URLFOR($Resource.IntegrationResources,'/CSS/DataViewPage.css')}"/>
+     <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery.min.js')}" ></script>
+     <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery-ui.min.js')}" ></script>
+     <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery.serializeJSON.js')}" ></script>
+     <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/Validation/jquery.validate.js')}" ></script>
+     <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/Validation/jquery.validate.min.js')}" ></script>
+     <!--<script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources,'Script/Lookup.js')}" ></script>-->
+     <script type="text/javascript">
+         var j$ = jQuery.noConflict();
+         hideLoading();
+         
+         function fncRefereshDetail()
+         {
+             alert(j$("[id$='API']").val());
+             RefereshDetail(j$("[id$='API']").val())
+         }
+     </script> 
+     
+     
+     <!--<apex:detail id="IdEntityDetial" relatedList="false" relatedListHover="false" />-->
+     <apex:pageBlock rendered="true"> 
+     <apex:sectionHeader title="Entity" />
+     <br/>
+   <apex:outputLink value="/apex/HomeSetting" style="font-size:11px;text-decoration:none;font-family:Verdana,Arial,serif;color:#015ba7;">&nbsp;&nbsp;&nbsp;&#60;&#60; Back to Home</apex:outputLink>
+    <apex:outputLink value="/apex/EntityList" style="font-size:11px;text-decoration:none;font-family:Verdana,Arial,serif;color:#015ba7;" target="_top">&nbsp;&nbsp;&nbsp;&#60;&#60; Back to Entity List</apex:outputLink>
+    <br/>
+     <apex:form >
+          <apex:pagemessages Id="IdLog"/>
+          <apex:pageBlock id="hdrBlock">
+              <apex:actionFunction name="RefereshDetail" action="{!RefereshDetail}" immediate="true" oncomplete="hideLoading();" reRender="IdLog,NewSourceField,IdBtnPanel,IdGroup,hdrBlock" >
+                <apex:param name="APIName" value="" assignTo="{!APIName}" />
+            </apex:actionFunction>
+            
+              <apex:pageBlockButtons location="both">
+                  <!--<apex:commandButton reRender="IdLog" value=" Fields" onclick="showLoading();fncRefereshDetail();" styleClass="btn"/>-->
+                  <apex:commandButton reRender="IdLog,hdrBlock,NewSourceField,IdBtnPanel,IdGroup" value="Refresh Fields" action="{!RefereshDetail}" styleClass="btn" onclick="showLoading();" oncomplete="hideLoading();" />
+                  <apex:commandButton value="Save" action="{!SaveSourceField}" styleClass="btn" />
+                  <apex:commandButton value="Cancel" action="{!CancelUpsert}"  styleClass="btn" immediate="true"/>
+              </apex:pageBlockButtons>
+             <apex:pageBlockSection columns="2" id="hdrBlock">
+                 <apex:inputField value="{!Enity.Entity_Code__c}"/>  
+                 <apex:inputField id="API" value="{!Enity.API_Method__c}"/>  
+                 <apex:selectList id="IdGroup" value="{!Enity.Group_Name__c}" multiselect="false" size="1" >
+                    <apex:selectOptions value="{!GroupOptions}"/>
+                 </apex:selectList>  
+                 <apex:inputField value="{!Enity.Parent_Entity_Id__c}"/>   
+                 <apex:inputField value="{!Enity.Entity_Detail_Id__c}"/>
+                <apex:selectList value="{!Enity.Integration_Key__c}" multiselect="false" size="1" label="Integration" title="Integration" >
+                    <apex:selectOptions value="{!IntegrationList}"/>
+                 </apex:selectList>
+                
+             </apex:pageBlockSection>
+         </apex:pageBlock> 
+         
+        
+        
+        <apex:tabPanel > 
+            <apex:tab label="Source Fields" switchType="client" >
+                <apex:pageBlock title="Source Fields" Id="NewSourceField">
+                    <apex:pageBlockTable value="{!Enity_Details}" var="ED"  >
+                        <apex:column value="{!ED.Field_APIName__c}" headerValue="API Name"/>
+                        <apex:column value="{!ED.Name}"  headerValue="Label"/>
+                        <apex:column value="{!ED.Data_Type__c}" HeaderValue="Data Type"/>
+                        <apex:column value="{!ED.Values__c}" headerValue="Values"/> 
+                        <apex:column value="{!ED.Group_Name__c}" headerValue="Group Name"/> 
+                        
+                    </apex:pageBlockTable>
+                </apex:pageBlock>
+            </apex:tab>    
+            <apex:tab label="Primary Key" switchType="client" >
+                <apex:panelGrid id="IdBtnFilterPanel" columns="3">             
+                    <apex:commandButton reRender="IdLog,FilterField,IdBtnFilterPanel" action="{!AddMaintainanceKeyRow}" onclick="showLoading();" value="Add Row" oncomplete="hideLoading();" />    
+                    <apex:commandButton reRender="IdLog,FilterField,IdBtnFilterPanel" action="{!RemoveKeyRow}" onclick="showLoading();" value="Remove Row" oncomplete="hideLoading();" />             
+                </apex:panelGrid>
+                
+                <apex:pageBlock title="Keys" Id="FilterField">
+                <apex:pageBlockTable value="{!Entity_Keys}" var="FF"  >                    
+                     <apex:column headerValue="Select" style="width:10px;" > 
+                        <apex:inputCheckbox value="{!FF.isSyncKey__c}" />
+                    </apex:column> 
+                                                           
+                    <apex:column headerValue="Source Field">                         
+                        <apex:selectList value="{!FF.Key_Field__c}" multiselect="false" size="1" >
+                            <apex:selectOptions value="{!options}"/>
+                        </apex:selectList>                        
+                    </apex:column>                                         
+                </apex:pageBlockTable>
+              </apex:pageBlock> 
+            </apex:tab>    
+        </apex:tabPanel>        
+        
+    </apex:form>
+    <br/>
+    </apex:pageBlock> 
+    <!--<apex:relatedList list="MappingHeader_Entity__r" />-->
+
+</apex:page>

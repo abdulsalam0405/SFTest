@@ -1,0 +1,536 @@
+<apex:page sidebar="false" controller="UnlinkAccountController" tabStyle="ERP_Administration__tab" docType="html-5.0" showHeader="false">
+    <c:LoadBarComponent />
+    <c:NoRightsComponent rendered="{!AND(if(JSENCODE(ProfileName)=='System Administrator',false,true),NOT(bAdministration))}"></c:NoRightsComponent>
+    <style type="text/css">
+        .bPageBlock {
+            border-top: 4px solid #63a4c5 !important;
+        }
+        
+        .pbSubheader {
+            background-color: #63a4c5 !important;
+        }
+        .pageTitleIcon
+        {
+            background-image : none !important;
+            width :35px !important;
+            height:35px !important;
+        }
+        .tblEntity 
+        {
+            width: 400px;
+            margin:0 auto;
+            border-collaps:collaps;
+        }
+        .bPageBlock
+        {
+            font-size: 12px; !important;
+        } 
+        .activeTab 
+        {
+            background-color: #236FBD; 
+            color:white;
+            background-image:none;
+            border-top-left-radius:5px;
+            border-top-right-radius:5px
+        }
+        .inactiveTab 
+        {
+            background-color: lightgrey; 
+            color:black; 
+            background-image:none;
+            border-top-left-radius:5px;
+            border-top-right-radius:5px
+        }
+        .hdr{font-weight:bold;}
+        .rich-tab-header{font-size: 12px;}
+        .rich-tabhdr-side-cell{border:none;}
+        .rich-tabpanel-content{font-size: 12px;}
+        .refreshListButton1
+        {
+            background: url(/img/alohaSkin/sync.png) top left no-repeat !important;
+            width: 22px ;
+            height: 23px;
+            vertical-align: middle;
+            background-position: 2px 3px !important;
+        }
+        .ConFailed
+        {
+            color:red;
+            font-size:100%;
+            font-weight:bold;
+        }
+        .ConSuccess
+        {
+            color:green;
+            font-size:100%;
+            font-weight:bold;
+        }
+        .data2Col
+        {
+            padding-left: 0px !important;
+            padding-right: 0px !important;
+        }
+        .error{border: 1px solid #c00 !important;}
+        label.error
+        {
+            border: 0px !important;
+            margin-left:5px !important; 
+            color:red !important;
+        }
+        
+        .labelCol
+        {
+            padding-right: 15px !important;
+        }
+        .NavSelect
+        {
+            vertical-align: top !important;
+            height: 35px important;
+            font-family: Arial,Helvetica,sans-serif;
+            font-size: 11.3px;
+            margin-top: -1px !important;
+        }
+        
+        .fixed-table-container {
+            width: 100%;
+            height: 300px;
+            //border: 1px solid black;
+            margin: 10px auto;
+            background-color: white;
+            position: relative;
+            padding-top: 20px;
+            border: 1px solid #eaeaea !important;
+            //border-top: 0px none !important;
+        }
+
+        .fixed-table-container-inner {
+            overflow-x: hidden;
+            overflow-y: auto;
+            height: 100%;
+        }
+        
+        .header-background {
+            background-color: #f2f3f3;
+            height: 30px;
+            position: absolute;
+            top: 0;
+            right: 0;
+            left: 0
+        }
+        
+        .th-inner {
+            position: absolute;
+            top: 0;
+            line-height: 30px;
+            text-align: left;
+            //border: 1px solid #eaeaea !important;
+            padding-left: 5px;
+            margin-left: -5px;
+                        
+        }
+        .call1
+        {
+           
+            width:20%;
+        }
+        
+        
+    </style>
+   <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery.min.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery-ui.min.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery.serializeJSON.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/Validation/jquery.validate.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/Validation/jquery.validate.min.js')}" ></script>
+    <!--<link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css"></link>-->
+    <link rel="stylesheet" href="{!URLFOR($Resource.IntegrationResources, '/Jquery/ui/1.10.4/themes/smoothness/jquery-ui.css')}"></link>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources,'/Script/Lookup.js')}" ></script>
+    
+    <script type="text/javascript">
+        var j$ = jQuery.noConflict();
+        
+        j$(document).ready(function () 
+        {
+            j$(".pageTitleIcon").attr("src", "{!URLFOR($Resource.IntegrationResources,'/Images/Administration/Unlink.png')}"); 
+            
+            hideLoading();
+            
+            j$("[id$='btnUnlink']").click(function()
+            {
+                fncUnlinkCustomer();
+                
+                return false;
+            });
+        });
+        
+        function fncSelectAll(mstr)
+        {
+            var CheckStatus=j$(mstr).prop('checked');
+            
+            j$('.Mapping').each(function ()
+            {
+                j$(this).prop('checked',CheckStatus);
+            });
+        }
+        
+        function fncUnSelectAll()
+        {
+            j$('#mstrCheckbox').prop('checked',false);
+            j$('.Mapping').each(function ()
+            {
+                j$(this).prop('checked',false);
+            });
+        }
+        
+        function fncDoPreviousNext()
+        {
+            var Boxes=j$(".Mapping:checkbox:checked");
+            if(Boxes.length > 0)
+            {
+                var Result=confirm('Note: The selection of Accounts for unlinking will be lost. Do you want to proceed?');
+                if(Result)
+                    return true;                    
+                else
+                    return false;
+            }
+            else
+                return true;
+        }
+        
+        function fncUnlinkCustomer()
+        {
+            debugger;
+            var AccIds=new Array();
+            
+            j$(".Mapping:checkbox:checked").each(function (i)
+            {
+                    AccIds[i]=j$(this).attr('id');
+            });
+                
+            if(AccIds.length > 0)
+            {
+                showLoading();
+            
+                try 
+                {
+                    Visualforce.remoting.Manager.invokeAction('{!$RemoteAction.UnlinkAccountController.UnlinkCustomers}',AccIds,
+                
+                    function (result, event) 
+                    {
+                        if (event.status) 
+                        {
+                            hideLoading();
+                            var msg='';
+                            if(result)
+                            {
+                                msg='The Account(s) are unlinked successfully';
+                                fncDisplayMessage('Confirm','The Account(s) are unlinked successfully');
+                            }
+                            else
+                                msg = result;
+                            
+                            j$('.btn').each(function() 
+                            {
+                                if(this.id== 'btnUnlink' || this.id== 'btnCancel')  
+                                    j$("[id$='"+ this.id +"']").val('Unlinking');
+                            });
+                            
+                            GetList(getElementByIdCS('Integration_lkid').value);
+                            
+                            j$('.btn').each(function() 
+                            {
+                                if(this.id== 'btnUnlink') 
+                                    j$("[id$='"+ this.id +"']").val(' Unlink ');
+                                    
+                                if(this.id== 'btnCancel') 
+                                    j$("[id$='"+ this.id +"']").val(' Cancel ');
+                            });                                         
+                        }
+                    }, {buffer: false, escape: true, timeout: 120000 });
+                }
+                catch (e) 
+                {
+                    //fncShowMessage("Error:" + e.message,'Unlink');
+                    fncDisplayMessage('Error',e.message);
+                }
+            }
+            else
+            {
+                fncDisplayMessage('Info','Select Account from the list to be unlinked.');
+            }
+        }
+        
+        //Show Apex Message
+        function fncDisplayMessage(Type,Message)
+        {
+            j$('#imgError').hide();
+            j$('#imgWarning').hide();
+            j$('#imgConfirm').hide(); 
+            j$('#imgInfo').hide();
+        
+            switch(Type)
+            {
+                case "Error":
+                    j$('#imgError').show();
+                    break;
+                case "Warning":
+                    j$('#imgWarning').show();
+                    break;
+                case "Confirm":
+                    j$('#imgConfirm').show();
+                    break;
+                case "Info":
+                    j$('#imgInfo').show();
+                    break;
+            }
+        
+            j$('#msgHeader').show();
+            j$('#messages').html(Message);
+        
+            j$('#msgHeader').fadeIn();
+            j$('#msgHeader').fadeOut(4000,"linear"); 
+        }
+        
+        function fncShowMessage(message,strTitle)
+        {
+            j$( "#message" ).html(message);
+            j$( "#dialog-message" ).dialog({ modal:true,title:strTitle, position: { my: "center", at: "center", of: window }, buttons: { Ok: function() { j$( this ).dialog( "close" );}}});
+        }
+        
+        function fncCancel()
+        {
+            showLoading();
+            
+            j$("[id$=FromAccount]").val('');
+            j$("[id$=ToAccount]").val('');
+            //j$("[id$=Integration]").val('');
+            //j$("[id$=Integration_lkid]").val('');
+            fncUnSelectAll();
+            fncToggleSections('Cancel');
+            hideLoading();
+        } 
+          
+        function fncAdjustWidth()
+        {
+            /*
+            if(j$('#AccountList tr').length > 10)
+                j$('#AccountList').css('width','101.5%');
+            else
+                j$('#AccountList').css('width','100%');
+            */
+        }
+        
+        function fncToggleSections(btnName) 
+        {
+            if(btnName == "Go") 
+            {
+                //divFilterSection
+                j$("#divAccountList").show();
+                j$('.btn').each(function() 
+                {
+                    if(this.id== 'btnUnlink' || this.id== 'btnCancel') 
+                    {
+                        j$("[id$='"+ this.id +"']").show();
+                    }
+                });
+            }
+            else 
+            {
+                j$("#divAccountList").hide();
+                j$('.btn').each(function() 
+                {
+                    if(this.id== 'btnUnlink' || this.id== 'btnCancel') 
+                        j$("[id$='"+ this.id +"']").hide();
+                });
+            }
+        }
+    </script>
+    <apex:pageBlock rendered="{!OR(if(JSENCODE(ProfileName)=='System Administrator',true,false),(bAdministration))}" >
+    <apex:sectionHeader title="Unlink Account"/>
+    <apex:outputLink value="/apex/HomeSetting" style="font-size:11px;text-decoration:none;font-family:Verdana,Arial,serif;color:#015ba7;">&nbsp;&nbsp;&nbsp;&#60;&#60; Back to Home</apex:outputLink>
+    <br/>
+    <br/>
+    
+    <apex:form id="frmMap">
+        
+        <div class="message infoM3" role="alert" id="msgHeader" style="display:none">
+            <table border="0" cellpadding="0" cellspacing="0" class="messageTable" style="padding:0px;margin:0px;">
+                <tbody>
+                    <tr valign="top">
+                        <td>
+                            <div id="imgError" style="display:none"><img alt="error" class="msgIcon" src="/s.gif" title="error" style="background-image:url(/img/msg_icons/error24.png);" /></div>
+                            <div id="imgWarning" style="display:none"><img alt="warning" class="msgIcon" src="/s.gif" title="warning" style="background-image:url(/img/msg_icons/warning24.png);" /></div>
+                            <div id="imgConfirm" style="display:none"><img alt="confirm" class="msgIcon" src="/s.gif" title="confirm" style="background-image:url(/img/msg_icons/confirm24.png);" /></div>
+                            <div id="imgInfo" style="display:none"><img alt="info" class="msgIcon" src="/s.gif" title="info" style="background-image:url(/img/msg_icons/info24.png);" /></div>
+                        </td>
+                        <td class="messageCell"><div id="messages" class="messageText"><span id="idspan"><h4></h4></span>Please select the Integration first.<br/></div></td>
+                    </tr>
+                    <tr><td></td><td></td></tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <apex:pageBlock mode="detail">
+            <apex:pageMessages id="messages"/>
+            <apex:actionFunction name="GetList" action="{!GetLinkedAccounts}" reRender="MappingList" oncomplete="fncAdjustWidth();hideLoading();">
+                <apex:param name="ConfigId" value="" assignTo="{!ConfigId}"/>
+                <apex:param name="Page" value="1" assignTo="{!page}"/>
+                <apex:param name="OffsetSize" value="0" assignTo="{!OffsetSize}"/>
+            </apex:actionFunction>
+            
+            <apex:actionFunction name="doNext" reRender="MappingList" action="{!doNext}" oncomplete="fncAdjustWidth();hideLoading();"  immediate="true">
+
+            </apex:actionFunction>
+            
+             <apex:actionFunction name="doPrevious" reRender="MappingList" action="{!doPrevious}" oncomplete="fncAdjustWidth();hideLoading();" immediate="true">
+            </apex:actionFunction>
+       
+            <div class="pbSubheader brandTertiaryBgr first tertiaryPalette"><h3>Filter Section</h3></div>
+            <div id="divFilterSection">
+                <table style="width:100%">
+                    <tr>
+                        <td class="hdr"><apex:outputLabel for="Integration">Integration </apex:outputLabel></td>
+                        <td class="hdr">
+                            <span>
+                                <input type="hidden" name="Integration_lkid" id="Integration_lkid" value="{!DefaulIntegrationID}"/> 
+                                <input type="hidden" name="Integration_lkold" id="Integration_lkold" value="null"/>
+                                <input type="hidden" name="Integration_lktp" id="Integration_lktp" value="{!ConfigObjectPrefix}"/>
+                                <input type="hidden" name="Integration_lspf" id="Integration_lspf" value="0"/>
+                                <input type="hidden" name="Integration_lspfsub" id="Integration_lspfsub" value="0"/>
+                                <input type="hidden" name="Integration_mod" id="Integration_mod" value="0"/>
+                                <input value="{!DefaulIntegrationName}" style="margin-left:5px" readonly="readonly" type="text" name="Integration" id="Integration" maxlength="255" size="30" onchange="getElementByIdCS('Integration_mod').value='1'; showLoading();GetList(getElementByIdCS('Integration_lkid').value)"/>
+                                <a href="javascript:void(0)" onclick="javascript:openLookup('Integration','frmMap','{!JSENCODE(ConfigObjectPrefix)}','Name','GUMU_Lite__ERP_System__c','GUMU_Lite__Web_Service_URL__c','','','GUMU_Lite__Inactive__c','true','notequal','','','');" 
+                                id="Integration_lkwgt" tabindex="2" title="Parent Account Lookup (New Window)" >
+                                    <img src="/s.gif" alt="Select Integration(New Window)" class="lookupIcon" onblur="this.className = 'lookupIcon';" onfocus="this.className = 'lookupIconOn';" onmouseout="this.className = 'lookupIcon';this.className = 'lookupIcon';" onmouseover="this.className = 'lookupIconOn';this.className = 'lookupIconOn';" title="Select Integration(New Window)"/>
+                                </a>                            
+                            </span>
+                        </td>
+                        <td class="hdr"><apex:outputLabel for="FromAccount" style="margin-left:10px"> From Account Name </apex:outputLabel></td>
+                        <td class="hdr"><apex:inputtext id="FromAccount" size="30" style="margin-left:5px" value="{!FromAccount}"/></td>
+                        <td class="hdr"><apex:outputLabel for="ToAccount" style="margin-left:10px"> To Account Name </apex:outputLabel></td>
+                        <td class="hdr"><apex:inputtext id="ToAccount" size="30" style="margin-left:10px" value="{!ToAccount}"/></td>
+                        <td ><apex:commandButton value=" Get List " onclick="showLoading();GetList(getElementByIdCS('Integration_lkid').value);fncToggleSections('Go');" id="btnGo" reRender="none"/></td>
+                    </tr>
+                </table>
+            </div>
+            <br/>
+            <div id="divAccountList" style="display:none">
+                <apex:pageBlockSection title="Linked Account List" collapsible="false" columns="1" id="MappingList">
+                    <apex:outputPanel >
+                        
+                        <div style="width:100%;height:300px;overflow-y:auto;overflow-x:auto; border: 1px solid #eaeaea !important; border-bottom:0px !important;border-left:0px !important;border-top:0px !important;" >
+                           <div style="display: block;position: relative;">
+                                <!--<table style="width:100%;border-bottom:0px;" class="list" border="1" cellspacing="0" cellpadding="5">-->
+                                <table style="width:{!TableWidth}%;border-bottom:0px;table-layout:fixed;" class="list" border="1" cellspacing="0" cellpadding="5">
+                                      <colgroup>
+                                          <col width="30px"/>
+                                           <apex:repeat value="{!Fields}" var="f"> 
+                                              <col width="{!colWidth}%" />
+                                            </apex:repeat>
+                                    </colgroup>
+                                    <tbody>
+                                    <tr class="headerRow">
+                                        <td class="hdr"><input type="checkbox" id="mstrCheckbox" onchange="fncSelectAll(this)"/></td>
+                                        <apex:repeat value="{!Fields}" var="f"> 
+                                            <td><apex:outputtext value="{!f.Label}" /></td>
+                                        </apex:repeat>                                
+                                   </tr>
+                                 </tbody>
+                               </table>
+                            </div> 
+                        
+                            <div> 
+                                <table style="width:{!TableWidth}%;table-layout:fixed;" id="AccountList" class="list" border="1" cellspacing="0" cellpadding="5">
+                                      <colgroup>
+                                         <col width="30px"/>
+                                            <apex:repeat value="{!Fields}" var="f"> 
+                                                 <col width="{!colWidth}%" />
+                                            </apex:repeat>
+                                      </colgroup>
+                                      
+                                    <apex:variable value="{!0}" var="rowNum"/>
+                                    
+                                    <apex:repeat value="{!Accounts}" var="acc" >
+                                        <tr class="dataRow">
+                                            <td ><input type="checkbox" class="Mapping" id="{!acc['Id']}"/></td>
+                                            <apex:repeat value="{!Fields}" var="f"> 
+                                                <td id="{!acc['Id']}_{!f.FieldPath}"><apex:outputtext value="{!acc[f]}" /></td>
+                                            </apex:repeat>
+                                        </tr>                        
+                                    </apex:repeat>
+                                    
+                                </table>
+                            </div>
+                        </div> 
+                       
+                        <div id="ARInquiry_BottomNav" class="bottomNav" style="border: 1px solid rgb(224, 227, 229); padding: 7px;">
+                            <div class="paginator" >
+                                <span class="left">
+                                    <span class="selectorTarget"><apex:outputLabel value=" (Page {!page} of {!totalPages}) | Showing {!startIdx} to {!endIdx} of {!totalRecords} " /></span>
+                                </span>
+                                <span class="prevNextLinks">
+                                    <span class="prevNext">
+                                        <apex:image id="PrevEnabled" value="/s.gif" styleclass="prev"  rendered="{!hasPrevious}" />
+                                        <apex:image id="PrevDisabled" value="/s.gif" styleclass="prevoff" rendered="{!NOT(hasPrevious)}"/>
+                                       <!-- <apex:commandLink rendered="{!hasPrevious}" value="Previous" action="{!doPrevious}" onclick="if(fncDoPreviousNext()){showLoading();}else{return false}" reRender="MappingList" oncomplete="fncAdjustWidth();hideLoading();"/> -->
+                                        <apex:commandLink rendered="{!hasPrevious}" value="Previous" reRender="None" onclick="if(fncDoPreviousNext()){showLoading(); doPrevious();}"/>
+                                        <apex:outputLabel rendered="{!NOT(hasPrevious)}" value="Previous" />
+                                    </span>
+                                    <span class="prevNext">
+                                        <apex:commandLink rendered="{!hasNext}" value="Next" reRender="None" onclick="showLoading(); doNext();"  /> <!-- reRender="MappingList" action="{!doNext}"  onclick="if(fncDoPreviousNext()){showLoading();}else{return false;}" oncomplete="fncAdjustWidth();hideLoading();" -->
+                                        <apex:outputLabel rendered="{!NOT(hasNext)}" value="Next" />
+                                        <apex:image id="NextEnabled" value="/s.gif" styleclass="next"  rendered="{!hasNext}"/>
+                                        <apex:image id="NextDisabled" value="/s.gif" styleclass="nextoff" rendered="{!NOT(hasNext)}"/>
+                                    </span>
+                                </span>
+                                <span class="right">
+                                    Page Size &nbsp;
+                                    <apex:selectList value="{!PAGE_SIZE}" size="1" multiselect="false" onchange="GetList(getElementByIdCS('Integration_lkid').value);showLoading();" styleClass="NavSelect">
+                                        <apex:selectOption itemLabel="10" itemValue="10"/>
+                                        <apex:selectOption itemLabel="25" itemValue="25"/>
+                                        <apex:selectOption itemLabel="50" itemValue="50"/>
+                                        <apex:selectOption itemLabel="100" itemValue="100"/>
+                                        <apex:selectOption itemLabel="200" itemValue="200"/>
+                                    </apex:selectList> 
+                                </span>
+                            </div>
+                            <div class="clearingBox"></div>
+                        </div>  
+                                        
+                    </apex:outputPanel>
+                </apex:pageBlockSection>
+            </div>   
+            <apex:pageBlockButtons >
+                <input type="Submit" id="btnUnlink" value=" Unlink " class="btn" style="display:none" />
+                <input type="button" id="btnCancel" value=" Cancel " class="btn" onclick="fncCancel();" style="display:none"/>
+            </apex:pageBlockButtons>
+            
+        </apex:pageBlock>
+    </apex:form>
+    
+    <div id="dialog-form" title="ERP Customer" style="display:none">
+        <div style="border-style: solid;border-width: 1px;border-color: #e0e3e5;" >
+            <div style="padding:2px" id="dvMatchingInfo"/>
+            <div>
+                <table id="CustomerHeader" border="1" cellpadding="0" cellspacing="0" class="list" style="width:100%;border: 0px solid !important; border-collapse: collapse;background-color: #F2F3F3;"></table>
+            </div>
+            <div style="height: 360px;overflow-y:auto">
+                <table id="CustomerList" border="1" cellspacing="0" cellpadding="0" class="list" style="width:100%;border: 0px solid !important;border-collapse: collapse;"></table>
+            </div>          
+        </div>      
+    </div>
+    
+    <div id="dialog-message" title="Message" style="display:none">
+        <p>
+            <span class="ui-icon ui-icon-circle-check" style="float:left; margin:0 7px 50px 0;"></span>
+            <span id="message"></span>
+        </p>  
+    </div>
+    
+    <div id="dialog-action-message" title="Message" style="display:none">
+        <p>
+            <span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 50px 0;"></span>
+            <span id="action-message"></span>
+        </p>  
+    </div>
+    </apex:pageBlock>
+</apex:page>

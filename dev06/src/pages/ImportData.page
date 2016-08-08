@@ -1,0 +1,3 @@
+<apex:page sidebar="false" standardController="ERP_Config__c" tabStyle="ERP_Administration__tab"  docType="html-5.0" >
+   
+</apex:page>

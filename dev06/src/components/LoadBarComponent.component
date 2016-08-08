@@ -1,0 +1,26 @@
+<apex:component >
+    <style>
+        #dvLoading
+        {
+           background:white url({!URLFOR($Resource.IntegrationResources,'/Images/Other/LoadingBarImage.gif')}) no-repeat center center;
+           height: 100%;
+           width: 100%;
+           position: fixed;
+           z-index: 1000;
+           opacity: .5;
+           margin: -25px 0 0 -25px;
+        }
+    </style>
+     
+    <div id="dvLoading"  align="center" valign="middle"/>
+    <script>
+        function showLoading() 
+        {
+            j$('#dvLoading').fadeIn();
+        }
+        function hideLoading() 
+        {
+            j$('#dvLoading').fadeOut();
+        }
+    </script>
+</apex:component>

@@ -1,0 +1,70 @@
+<apex:component controller="HomeSettingController" >
+
+    <style>
+         .card {
+  overflow: hidden;
+  position: relative;
+  border: 1px solid #CCC;
+  border-radius: 8px;
+  text-align: center;
+  padding: 0;
+  background-color: #5BC0DE;
+  color: #ffffff;
+  margin:5%;
+}
+  .dropdown{
+      margin-top: 6px; 
+      margin-right: 15px;
+  }
+  .dropdown-menu{
+  font-size: 13px;
+   margin-left: -25% !important;
+  margin: 9px 0 0;
+  }
+  
+    .dropdown-menu>li>a:focus, .dropdown-menu>li>a:hover{
+            color: #FFFFFF;
+    text-decoration: none;
+    background-color: #5BC0DE;
+    }
+        .btn-success:hover {
+    color: #fff;
+    background-color: #5BC0DE;
+    border-color: #5BC0DE;
+}
+    .btn-success {
+    color: #fff;
+    background-color: #5BC0DE;
+    border-color: #5BC0DE;
+}
+
+.btn-success.active, .btn-success:active, .open>.dropdown-toggle.btn-success {
+    color: #fff !important;
+    background-color: #5BC0DE !important;
+    border-color: #5BC0DE !important;
+}
+
+    </style>
+   <nav class="navbar navbar-default" id="nav" style="background-color: #284c79;">
+  
+  <div class="container-fluid">
+   <div style="float:left">
+ 
+    </div>
+
+    <div class="navbar-header" style="float:right;">
+      
+      <div class="dropdown">
+        <button class="btn btn-success dropdown-toggle" type="button" id="menu1" data-toggle="dropdown">GUMU Settings
+            <span class="caret"></span></button>
+            <ul class="dropdown-menu" role="menu" aria-labelledby="menu1" style="margin-left: -25% !important;">
+                <apex:repeat value="{!appMenuItemLst}" var="appItems" >
+                    <li class="presentation"><a role="menuitem" tabindex="-1" href="{!appItems.StartUrl}">{!appItems.Label}</a></li>
+                </apex:repeat>
+            </ul>
+        </div>
+    </div>
+    
+  </div>
+</nav>
+</apex:component>

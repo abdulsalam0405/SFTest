@@ -1,0 +1,403 @@
+<apex:page sidebar="false" controller="EntityMappingController" showHeader="false" tabstyle="Entity_Sync_Mapping__tab" >
+<!--<c:AppMenuItem ></c:AppMenuItem> 
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"/>
+        <script src="{!URLFOR($Resource.gmu, '/BootStrap/js/bootstrap.min.js')}"/>
+        <link  rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" />
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css"  media="screen, handheld"/> -->
+    <c:LoadBarComponent />
+  <c:NoRightsComponent rendered="{!AND(if(JSENCODE(ProfileName)=='System Administrator',false,true),NOT(bAdministration))}"></c:NoRightsComponent>
+    <style type="text/css">
+        .bPageBlock {
+            border-top: 4px solid #63a4c5 !important;
+        }
+        
+        .pbSubheader {
+            background-color: #63a4c5 !important;
+        }
+     
+        .alert-box {
+        color:#555;
+        border-radius:10px;
+        font-family:Tahoma,Geneva,Arial,sans-serif;font-size:11px;
+        padding:10px 36px;
+        margin:10px;
+       
+        }
+        
+        .alert-box span {
+        font-weight:bold;
+        text-transform:uppercase;
+        }
+        
+        .error {
+        background:#ffecec url('../../images/error.png') no-repeat 10px 50%;
+        border:1px solid #f5aca6;
+        }
+        
+        .success {
+        background:#e9ffd9 url('../../images/success.png') no-repeat 10px 50%;
+        border:1px solid #a6ca8a;
+        }
+        
+        .warning {
+        background:#fff8c4 url('../../images/warning.png')  no-repeat 10px 50%;
+        border:1px solid #f2c779;
+        }
+        
+        .notice {
+        background:#e3f7fc url('../../images/notice.png') no-repeat 10px 50%;
+        border:1px solid #8ed9f6;
+        }
+    
+    
+        .bPageTitle 
+        {
+            padding: 0px !important;
+            margin: 5px !important;
+        }
+        .pageTitleIcon {
+            background-image: url(/img/icon/orderBell32.png) !important;
+            
+        }
+        
+         .tblEntity 
+        {
+            width: 400px;
+            margin:0 auto;
+            border-collaps:collaps;
+        }
+        .activeTab 
+        {
+            background-color: #236FBD; 
+            color:white;
+            background-image:none;
+            border-top-left-radius:5px;
+            border-top-right-radius:5px
+        }
+        .inactiveTab 
+        {
+            background-color: lightgrey; 
+            color:black; 
+            background-image:none;
+            border-top-left-radius:5px;
+            border-top-right-radius:5px
+        }
+        .hdr{font-weight:bold;}
+        .rich-tab-header{font-size: 12px;}
+        .rich-tabhdr-side-cell{border:none;}
+        .rich-tabpanel-content{font-size: 12px;}
+        .requiredLegend
+        {
+            background-color: transparent !important;
+        }
+        .refreshListButton1
+        {
+            background: url(/img/alohaSkin/sync.png) top left no-repeat !important;
+            width: 22px ;
+            height: 23px;
+            vertical-align: middle;
+            background-position: 2px 3px !important;
+        }
+        .ConFailed
+        {
+            color:red;
+            font-size:100%;
+            font-weight:bold;
+        }
+        .ConSuccess
+        {
+            color:green;
+            font-size:100%;
+            font-weight:bold;
+        }
+        .data2Col
+        {
+            padding-left: 0px !important;
+            padding-right: 0px !important;
+        }
+        .error{border: 1px solid #c00 !important;}
+        label.error
+        {
+            border: 0px !important;
+            margin-left:5px !important; 
+            color:red !important;
+        }
+        .labelCol
+        {
+            padding-right: 15px !important;
+            vertical-align: middle !important;
+        }
+        .ui-widget 
+        {
+            font-family: Arial,Helvetica,sans-serif !important;
+            font-size: 1.0em !important;
+        }
+        .ui-widget-header 
+        {
+            border: 1px solid #aaaaaa !important;
+            background: #cccccc !important;
+            color: #222222 !important;
+            font-weight: bold !important;
+        }
+        .ui-widget-content 
+        {
+            border: 1px solid #aaaaaa !important;
+            background: #ffffff !important;
+            color: #222222 !important;
+        }
+        .ui-progressbar 
+        {
+            height:20px !important;
+            padding-right:0px !important;
+            margin-right:0px !important;
+        }
+        .ui-progressbar-value
+        {
+            height:20px !important;
+            background: #63a4c5 !important;
+        }
+        .progress-label 
+        {
+            margin-left: 10px;
+            text-align: center;
+            top: 4px;
+            font-size:12px;
+            font-weight: bold;
+            text-shadow: 1px 1px 0 #fff;
+        }
+        
+        .detailList
+        {
+            width : 100% !important;
+            border-collapse: separate;
+            border-spacing: 2px;
+            border-color: gray;
+            
+        }
+        
+        /*
+        .bPageBlock .detailList tr td
+        {
+            border-bottom: 1px solid #e3deb8 !important;
+        }
+        */
+        
+        tr.headerRow {
+            background: #f2f3f3;
+            border-width: 0 0 1px 1px;
+            border-color: #e0e3e5;
+            color: #000;
+            //font-size: .9em;
+            font-weight: bold;
+            padding: 5px 2px 4px 5px;
+        }
+        
+        table.list {
+            background-color: #fff;
+            border-top: 1px solid #e0e3e5 !important;
+        }
+        
+        .ui-dialog-titlebar 
+        {
+            background-color: #6aafa2 !important;
+            color: #fff !important;
+            font-family: Arial,Helvetica,sans-serif;
+        }
+    </style>
+    
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery.min.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery-ui.min.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/jquery.serializeJSON.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/Validation/jquery.validate.js')}" ></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources, '/Jquery/Validation/jquery.validate.min.js')}" ></script>
+    <!--<link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css"></link>-->
+    <link rel="stylesheet" href="{!URLFOR($Resource.IntegrationResources, '/Jquery/ui/1.10.4/themes/smoothness/jquery-ui.css')}"></link>
+    <script type="text/javascript" src="{!URLFOR($Resource.IntegrationResources,'/Script/Lookup.js')}" ></script>
+    
+    <script type="text/javascript">
+        var j$ = jQuery.noConflict();
+         var ERPSystemName
+        j$(document).ready(function () 
+        {
+         
+             ERPSystemName = '{!JSENCODE(ERPSystemName)}';
+             //GetList();
+             hideLoading();  
+        });
+        
+
+        function fncAdjustWidth()
+        {
+            
+            var rowCount = j$('#OrderListtr').length;
+            if(rowCount > 10)
+                j$('#OrderList').css('width','101.75%');
+            else
+                j$('#OrderList').css('width','100%');
+        }
+        
+        function fncRedirectPage(Id,Action) 
+        {
+              //alert('Call Batch Method..' + '   Id:'  + Id  + '  Action:' + Action);
+              
+              if(Action =='Edit' || Action=='View')
+                  RedirectPage(Id,Action);
+              else if(Action =='Del')
+                  deleteRecord(Id,Action);
+              else    
+                  syncNow(Id,Action);
+          
+        }
+        
+    </script>
+   
+   <apex:pageBlock rendered="{!OR(if(JSENCODE(ProfileName)=='System Administrator',true,false),(bAdministration))}" >
+   <br/>
+    <apex:sectionHeader title="Entity Sync Mapping"/>
+    <br/>
+   <apex:outputLink value="/apex/HomeSetting" style="font-size:11px;text-decoration:none;font-family:Verdana,Arial,serif;color:#015ba7;">&nbsp;&nbsp;&nbsp;&#60;&#60; Back to Home</apex:outputLink>
+    <br/>
+    <apex:form id="frmMap">
+       
+         
+        <apex:actionFunction action="{!SyncNow}" name="syncNow" rerender="messages" oncomplete="hideLoading();">
+            <apex:param name="Id"   assignTo="{!SyncId}"    value="" />
+            <apex:param name="Action" assignTo="{!Action}"   value="" />
+        </apex:actionFunction>
+        
+         <apex:actionFunction action="{!RedirectPage}" name="RedirectPage" rerender="messages">
+            <apex:param name="Id" value="" />
+            <apex:param name="Action" value="" />
+        </apex:actionFunction>
+        
+        <apex:actionFunction action="{!deleteRecord}" name="deleteRecord" rerender="messages,EntityRepeater" oncomplete="GetList();hideLoading();" >
+            <apex:param name="Id" value="" />
+            <apex:param name="Action" value="" />
+        </apex:actionFunction>
+        
+        <apex:actionFunction name="Previous" action="{!doPrevious}" reRender="MappingList" oncomplete="fncAdjustWidth();hideLoading();"/> 
+        <apex:actionFunction name="Next" action="{!doNext}" reRender="MappingList" oncomplete="fncAdjustWidth();hideLoading();"/>
+        
+        <apex:pageBlock mode="detail">
+            <apex:pageMessages id="messages"/>
+            <apex:actionFunction name="GetList" action="{!GetEntityMappings}" reRender="MappingList,messages" oncomplete="fncAdjustWidth();hideLoading();">
+                <apex:param assignTo="{!page}" name="Page" value="1"/>
+                 <apex:param assignTo="{!OffsetSize}" name="OffsetSize" value="0"/>
+            </apex:actionFunction>
+            <apex:commandButton value="New Entity Mapping" style="margin-bottom:8px" action="{!RedirectNewPage}" />
+            <input type="button" id="Refresh"   onclick="showLoading();GetList();" class="btn refreshListButton1" title="Refresh"/> 
+                <apex:selectList value="{!selectedERP}"  multiselect="false"  onchange="showLoading();GetList();"  size="1" disabled="false" >
+                <apex:selectOptions value="{!IntegrationList}"  />
+            </apex:selectList>
+          
+           
+            <div id="divAccountList">
+                <apex:pageBlockSection title="Entity Mapping List" collapsible="false" columns="1" id="MappingList">
+                    <apex:outputPanel >
+                        <div>
+                            <table style="width:100%;border-bottom:0px;" class="list" border="1" cellspacing="0" cellpadding="5">
+                                <colgroup>
+                                    <col width="15%"/>
+                                    <col width="20%"/>
+                                    <col width="20%"/>
+                                    <col width="20%"/>
+                                    <col width="10%"/>
+                                   <!-- <col width="15%"/>-->
+                                </colgroup>
+                                <tbody>
+                                <tr class="headerRow">
+                                    <td class="hdr">Action</td>
+                                    <td class="hdr">Name</td>
+                                    <td class="hdr">Target Entity</td>
+                                    <td class="hdr">Web Service Method</td>
+                                    <td class="hdr">Type</td>
+                                   <!-- <td class="hdr">ERP System</td>-->
+                                </tr> 
+                                </tbody>
+                            </table>
+                        </div> 
+                    
+                        <div style="overflow-y:auto;overflow-x:hidden;height:300px;border: 1px solid #eaeaea !important;border-top: 0px none !important;"> 
+                            <table style="width:100%;" id="OrderList" class="list" border="1" cellspacing="0" cellpadding="5">
+                                 <colgroup>
+                                    <col width="15%"/>
+                                    <col width="20%"/>
+                                    <col width="20%"/>
+                                    <col width="20%"/>
+                                    <col width="10%"/>
+                                    <!--<col width="15%"/>-->
+                                </colgroup>
+                                
+                                <apex:repeat value="{!EntityMappings}" var="EM" id="EntityRepeater">
+                                    <tr class="dataRow">
+                                        <td class="actionColumn">
+                                            <a id="lnkView" class="actionLink" name="lnkView" href="/apex/ImporterMaintenanceView?Id={!EM['Id']}"  >View/Delete</a> | 
+                                            <a id="lnkEdit" class="actionLink" name="lnkEdit" href="/apex/ImporterMaintenance?Id={!EM['Id']}">Edit</a> |
+                                            <!--<a id="lnkDel" class="actionLink" name="lnkDel" href="javascript:void(0);" onclick="fncRedirectPage('{!EM['Id']}','Del');showLoading();">Del</a> | --> 
+                                            <a id="lnkSyncNow" class="actionLink" name="lnkDel" href="javascript:void(0);" onclick="showLoading();fncRedirectPage('{!EM['Id']}','Sync');" >Sync Now</a>
+                                        </td>
+                                        
+                                        <td id="{!EM['Id']}_Source_Entity__c"><apex:outputtext value="{!EM['Source_Entity__c']}"  /></td>
+                                        <td id="{!EM['Id']}_Target_Entity__c"><apex:outputtext value="{!EM['Target_Entity__c']}"  /></td>
+                                        <td id="{!EM['Id']}_Entity_Id__r.API_Method__c"><apex:outputtext value="{!EM['Entity_Id__r.API_Method__c']}"  /></td> 
+                                        <td id="{!EM['Id']}_Name"><apex:outputtext value="{!EM['Sync_Type__c']}"  /></td>
+                                       <!-- <td id="{!EM['Id']}_ERP_System__c"><apex:outputtext value="{!EM['ERP_System__c']}"  /></td> -->
+                                                                           
+                                    </tr>                        
+                                </apex:repeat>
+                            </table>
+                        </div>
+                        <div id="ARInquiry_BottomNav" class="bottomNav" style="border: 1px solid rgb(224, 227, 229); padding: 7px;">
+                            <div class="paginator" >
+                                <span class="left">
+                                    <span class="selectorTarget"><apex:outputLabel value=" (Page {!page} of {!totalPages}) | Showing {!startIdx} to {!endIdx} of {!totalRecords} " /></span>
+                                </span>
+                                <span class="prevNextLinks">
+                                    
+                                    <span class="prevNext">
+                                        <apex:image id="PrevEnabled" value="/s.gif" styleclass="prev"  rendered="{!hasPrevious}" />
+                                        <apex:image id="PrevDisabled" value="/s.gif" styleclass="prevoff" rendered="{!NOT(hasPrevious)}"/>
+                                        <apex:commandLink rendered="{!hasPrevious}" value="Previous" action="{!doPrevious}" onclick="showLoading();"  reRender="MappingList,messages" oncomplete="fncAdjustWidth();hideLoading();"/>
+                                        <apex:outputLabel rendered="{!NOT(hasPrevious)}" value="Previous" />
+                                    </span>
+                                    <span class="prevNext">
+                                        <apex:commandLink rendered="{!hasNext}" value="Next"  action="{!doNext}" onclick="showLoading();"  reRender="MappingList,messages"  oncomplete="fncAdjustWidth();hideLoading();"/>
+                                        <apex:outputLabel rendered="{!NOT(hasNext)}" value="Next" />
+                                        <apex:image id="NextEnabled" value="/s.gif" styleclass="next"  rendered="{!hasNext}"/>
+                                        <apex:image id="NextDisabled" value="/s.gif" styleclass="nextoff" rendered="{!NOT(hasNext)}"/>
+                                    </span>
+                                </span>
+                                <span class="right">
+                                    Page Size &nbsp;
+                                    <apex:selectList value="{!PAGE_SIZE}" size="1" multiselect="false" onchange="GetList();showLoading();" styleClass="NavSelect">
+                                        <apex:selectOption itemLabel="10" itemValue="10"/>
+                                        <apex:selectOption itemLabel="25" itemValue="25"/>
+                                        <apex:selectOption itemLabel="50" itemValue="50"/>
+                                        <apex:selectOption itemLabel="100" itemValue="100"/>
+                                        <apex:selectOption itemLabel="200" itemValue="200"/>
+                                        <apex:selectOption itemLabel="500" itemValue="500"/>
+                                        <apex:selectOption itemLabel="1000" itemValue="1000"/>
+                                    </apex:selectList> 
+                                </span>
+                            </div>
+                            <div class="clearingBox"></div>
+                        </div>                    
+                    </apex:outputPanel>
+                </apex:pageBlockSection>
+            </div>
+            
+        </apex:pageBlock>
+    
+        <apex:pageBlock id="ProgressBar">
+        <apex:actionPoller action="{!getMessage}" rerender="ProgressBar,msg,msg1,IdWarning" interval="5"/>
+           
+        
+        <div class="alert-box warning" id='IdWarning'><span></span>{!LogMessage}</div>
+         
+      </apex:pageBlock>
+      
+    </apex:form>
+    
+    </apex:pageBlock>
+    
+</apex:page>

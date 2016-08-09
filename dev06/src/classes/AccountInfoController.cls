@@ -14,13 +14,13 @@ global with sharing class AccountInfoController{
     //Data Page related variables
     public transient Component.Apex.PageBlock CustomerEnquiryPage  {get;set;}
     public transient Component.Apex.PageBlock FilterSection     {get;set;}
-    //Writing test Code for GIT Testing Verison 1 333 
+    //Writing test Code for GIT Testing Verison 1 333 444 
     public string ChildInquiry  {get; set;}
     public string ChildField    {get;set;}
     public string ChildValue    {get;set;}
 
     public String ParentText {get;set;}
-    public Boolean bShowParentURL{get;set;}
+    public Boolean bShowParentURL{get;set;} 
     public String ProfileName {get;set;} 
 
     public list<map<string,string>> ParentLinkList ;

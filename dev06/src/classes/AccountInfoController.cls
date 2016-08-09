@@ -8,16 +8,16 @@ global with sharing class AccountInfoController{
     public integer startIndex {get;set;}       
     public integer selectedPagesize {get;set;}      
     public string  status {get; set;}
-    public integer endIndex {get; set;} 
+    public integer endIndex {get; set;}
     public integer totalcount {get; set;}
 
     //Data Page related variables
     public transient Component.Apex.PageBlock CustomerEnquiryPage  {get;set;}
     public transient Component.Apex.PageBlock FilterSection     {get;set;}
-    //Writing test Code for GIT Testing Verison 1 333   777 
+    //Writing test Code for GIT Testing Verison 1 333 
     public string ChildInquiry  {get; set;}
     public string ChildField    {get;set;}
-    public string ChildValue    {get;set;} 
+    public string ChildValue    {get;set;}
 
     public String ParentText {get;set;}
     public Boolean bShowParentURL{get;set;}
